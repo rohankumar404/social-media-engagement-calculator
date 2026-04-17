@@ -300,6 +300,9 @@ class EngagementCalculatorController extends Controller
 
             \App\Models\Lead::firstOrCreate([
                 'email' => $request->input('email')
+            ], [
+                'source' => 'pdf_download',
+                'intent_level' => 'high'
             ]);
         }
 
