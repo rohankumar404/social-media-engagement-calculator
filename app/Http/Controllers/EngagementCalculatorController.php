@@ -11,7 +11,7 @@ class EngagementCalculatorController extends Controller
 {
     public function index()
     {
-        return view('calculator.index');
+        return view('tools.engagement-calculator');
     }
 
     public function calculate(Request $request)
@@ -54,7 +54,8 @@ class EngagementCalculatorController extends Controller
 
         if (!auth()->check()) {
             $guest_usage = session('guest_calculator_uses', 0);
-            if ($guest_usage >= 2) {
+            $guest_limit = \App\Models\Setting::where('key', 'guest_limit')->value('value') ?? 2;
+            if ($guest_usage >= (int)$guest_limit) {
                 return response()->json([
                     'error' => 'guest_limit_reached',
                     'message' => 'You have reached your free limit. Please sign up to continue.'
@@ -69,8 +70,9 @@ class EngagementCalculatorController extends Controller
                 ['usage_count' => 0, 'is_premium' => false]
             );
 
-            if (!$usageLimit->is_premium) {
-                if ($usageLimit->usage_count >= 3) {
+            if (!$usageLimit->is_premium && !$user->is_admin) {
+                $auth_limit = \App\Models\Setting::where('key', 'auth_limit')->value('value') ?? 3;
+                if ($usageLimit->usage_count >= (int)$auth_limit) {
                     $is_limited_mode = true;
                     $upgrade_required = true;
                 } else {
@@ -88,14 +90,17 @@ class EngagementCalculatorController extends Controller
             $engagement_per_post = $engagement_rate / $total_posts;
         }
 
-        if ($engagement_rate > 6) {
+        $er_viral = (float)(\App\Models\Setting::where('key', 'er_viral')->value('value') ?? 6);
+        $er_high = (float)(\App\Models\Setting::where('key', 'er_high')->value('value') ?? 3);
+
+        if ($engagement_rate > $er_viral) {
             $engagement_score = 'Viral';
             $recommendations = [
                 'Excellent engagement! Keep up the current content strategy.',
                 'Consider collaborations with other top creators in your niche.',
                 'Leverage this engagement to boost your latest products or announcements.'
             ];
-        } elseif ($engagement_rate >= 3) {
+        } elseif ($engagement_rate >= $er_high) {
             $engagement_score = 'High';
             $recommendations = [
                 'Great job! Your followers are highly engaged with your content.',

@@ -1,9 +1,315 @@
 @extends('layouts.app')
 
-@section('title', 'Social Media Engagement Calculator - MapsilyTools')
+@section('title', (($tool_settings['white_label_active'] ?? '0') == '1' ? ($tool_settings['custom_client_title'] ?? 'Calculator') : 'Social Media Engagement Calculator - MapsilyTools'))
 
 @section('content')
-<div class="container" x-data="calculatorForm()">
+<style>
+    /* Design Aesthetics */
+    [x-cloak] { display: none !important; }
+    :root {
+        --color-primary: {{ $tool_settings['primary_color'] ?? '#85f43a' }};
+        --bg-main: {{ $tool_settings['dark_mode_bg'] ?? '#1e1e1e' }};
+        --bg-card: rgba(255, 255, 255, 0.03);
+        --bg-card-hover: rgba(255, 255, 255, 0.05);
+        --text-muted: #a1a1aa;
+    }
+    body {
+        background-color: var(--bg-main);
+        color: #f8f9fa;
+        font-family: 'Figtree', 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+    }
+    
+    .calculator-app-wrapper h1, .calculator-app-wrapper h2, .calculator-app-wrapper h3, .calculator-app-wrapper h4, .calculator-app-wrapper h5, .calculator-app-wrapper h6, 
+    .calculator-app-wrapper .text-light, .calculator-app-wrapper .text-white, .calculator-app-wrapper p, .calculator-app-wrapper label, .calculator-app-wrapper .form-label, 
+    .calculator-app-wrapper td, .calculator-app-wrapper th, .calculator-app-wrapper li, .calculator-app-wrapper .step-label {
+        color: #f8f9fa !important;
+    }
+    .calculator-app-wrapper .text-muted, .calculator-app-wrapper .text-secondary {
+        color: var(--text-muted) !important;
+    }
+    
+    /* Strict Card Background Overrides */
+    .card {
+        background-color: rgba(255,255,255,0.03) !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+    }
+    .card-header {
+        background-color: transparent !important;
+        border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    }
+    .card-body {
+        color: #f8f9fa !important;
+    }
+
+    /* Strict Form Controls */
+    .form-control, .form-select, .form-range {
+        background-color: rgba(255,255,255,0.05) !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        color: #ffffff !important;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: rgba(255,255,255,0.08) !important;
+        border-color: var(--color-primary) !important;
+        box-shadow: 0 0 0 0.25rem rgba(133, 244, 58, 0.25) !important;
+        color: #ffffff !important;
+    }
+    
+    .text-primary-accent {
+        color: var(--color-primary) !important;
+    }
+    .page-hero {
+        text-align: center;
+        padding: 4rem 1rem;
+        background: radial-gradient(circle at 50% 0%, rgba(133, 244, 58, 0.08) 0%, transparent 60%);
+    }
+    .hero-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        background: rgba(133, 244, 58, 0.1);
+        color: var(--color-primary);
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(133, 244, 58, 0.2);
+    }
+    .btn-primary-cta {
+        background-color: var(--color-primary);
+        color: #121212;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 24px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 14px rgba(133, 244, 58, 0.2);
+    }
+    .btn-primary-cta:hover:not(:disabled) {
+        background-color: #96f556;
+        color: #121212;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(133, 244, 58, 0.4);
+    }
+    .btn-primary-cta:disabled {
+        background-color: #444;
+        color: #888;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+    .btn-outline-light {
+        border-color: rgba(255,255,255,0.1);
+        color: #fff;
+        transition: all 0.2s;
+    }
+    .btn-outline-light:hover {
+        background: rgba(255,255,255,0.05);
+        color: #fff;
+        border-color: rgba(255,255,255,0.2);
+    }
+    .card {
+        background-color: var(--bg-card);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 14px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+    .card:hover {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .card-header {
+        background: transparent;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 1.2rem 1.5rem;
+        color: #fff;
+    }
+    .form-control, .form-select {
+        background-color: rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        transition: all 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: rgba(0,0,0,0.3);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(133, 244, 58, 0.15);
+        color: #fff;
+    }
+    .form-control::placeholder {
+        color: rgba(255,255,255,0.3);
+    }
+    .form-label {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #e4e4e7;
+    }
+    
+    /* Progress Bar */
+    .steps-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 3rem;
+        position: relative;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .steps-container::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 0;
+        border-radius: 3px;
+    }
+    .steps-progress {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        height: 3px;
+        background: var(--color-primary);
+        z-index: 1;
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 3px;
+        box-shadow: 0 0 10px rgba(133, 244, 58, 0.5);
+    }
+    .step-item {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        width: 80px;
+    }
+    .step-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #333333;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px auto;
+        font-weight: bold;
+        color: #a1a1aa;
+        transition: all 0.4s ease;
+    }
+    .step-item.active .step-circle {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: #121212;
+        box-shadow: 0 0 15px rgba(133, 244, 58, 0.4);
+        transform: scale(1.1);
+    }
+    .step-item.completed .step-circle {
+        background: rgba(133, 244, 58, 0.2);
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+    }
+    .step-label {
+        font-size: 0.75rem;
+        color: #a1a1aa;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: color 0.3s;
+    }
+    .step-item.active .step-label {
+        color: #fff;
+    }
+
+    /* Sidebar Styles */
+    .sidebar-feature {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .sidebar-feature:hover {
+        background: var(--bg-card-hover);
+        border-color: rgba(255,255,255,0.05);
+        transform: scale(1.02);
+    }
+    .sidebar-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(133, 244, 58, 0.1);
+        color: var(--color-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    .sidebar-text h5 {
+        font-size: 1rem;
+        margin-bottom: 4px;
+        color: #fff;
+    }
+    .sidebar-text p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.4;
+    }
+    
+    .pro-card {
+        border: 1px solid var(--color-primary);
+        background: linear-gradient(145deg, rgba(39,39,39,1) 0%, rgba(20,20,20,1) 100%);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .pro-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(133, 244, 58, 0.1);
+    }
+    
+    /* CTA Banner Styles */
+    .cta-banner {
+        background: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2000') center/cover;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+        overflow: hidden;
+        margin-top: 4rem;
+        margin-bottom: 2rem;
+    }
+    .cta-banner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at 80% 50%, rgba(133, 244, 58, 0.15) 0%, transparent 60%);
+        pointer-events: none;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .steps-container {
+            margin-bottom: 2rem;
+        }
+        .step-label {
+            display: none;
+        }
+        .step-item {
+            width: auto;
+        }
+    }
+</style>
+
+<div class="container calculator-app-wrapper" x-data="calculatorForm()">
     <!-- Hero Section -->
     <div class="page-hero">
         <div class="hero-badge"><i class="bi bi-calculator me-2"></i>Free Tool</div>
@@ -203,10 +509,17 @@
                         </div>
                         
                         <!-- Guest Error Limit Reached -->
-                        <div x-show="errorMode" x-cloak class="alert alert-danger mt-4 border border-danger d-flex align-items-center" style="background-color: rgba(220, 53, 69, 0.1); color: #ff6b6b;">
-                            <i class="bi bi-x-circle-fill fs-4 me-3"></i>
-                            <div>
-                                <strong>Calculation Blocked!</strong> <span x-text="errorMsg"></span>
+                        <div x-show="errorMode" x-cloak class="alert alert-danger mt-4 border border-danger p-4" style="background-color: rgba(220, 53, 69, 0.1); color: #ff6b6b;">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-x-circle-fill fs-4 me-3"></i>
+                                <div>
+                                    <strong>Calculation Blocked!</strong> <span x-text="errorMsg"></span>
+                                </div>
+                            </div>
+                            <!-- Provide a fallback action button for the user to reset or bypass easily -->
+                            <div class="mt-2" x-show="errorMode">
+                                <button type="button" class="btn btn-outline-danger btn-sm px-3" @click="resetError">Try Again Later</button>
+                                <a href="/register" class="btn btn-danger btn-sm px-3 ms-2">Upgrade Now</a>
                             </div>
                         </div>
 
@@ -287,9 +600,9 @@
                                 
                                 <!-- Fake Engagement Warning -->
                                 <div class="col-md-6" x-show="hasFakeEngagement">
-                                    <div class="card h-100 mb-0" style="background-color: rgba(220,53,69,0.08); border: 1px solid rgba(220,53,69,0.4);">
+                                    <div class="card h-100 mb-0" style="background-color: var(--bg-main); border: 1px solid var(--color-primary);">
                                         <div class="card-body">
-                                            <h6 class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Fake Engagement Warning</h6>
+                                            <h6 class="text-primary-accent fw-bold"><i class="bi bi-shield-exclamation me-2"></i> Engagement Pattern Notice</h6>
                                             <ul class="text-light mt-3 mb-0 ps-3" style="font-size: 0.95rem; opacity: 0.9;">
                                                 <template x-for="msg in fakeMessages">
                                                     <li class="mb-2 text-white" x-text="msg"></li>
@@ -385,7 +698,7 @@
                                 
                                 <div class="row g-4">
                                     <div class="col-md-6">
-                                        <div class="p-3 rounded bg-dark border" style="border-color: rgba(255,255,255,0.05) !important;">
+                                        <div class="p-3 rounded border" style="background-color: #333333; border-color: rgba(255,255,255,0.05) !important;">
                                             <h6 class="text-muted text-center mb-3" style="font-size:0.85rem">Engagement vs Industry Average</h6>
                                             <div style="position: relative; height:220px;">
                                                 <canvas id="engagementBarChart"></canvas>
@@ -393,7 +706,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="p-3 rounded bg-dark border" style="border-color: rgba(255,255,255,0.05) !important;">
+                                        <div class="p-3 rounded border" style="background-color: #333333; border-color: rgba(255,255,255,0.05) !important;">
                                             <h6 class="text-muted text-center mb-3" style="font-size:0.85rem">Monthly Growth Projection</h6>
                                             <div style="position: relative; height:220px;">
                                                 <canvas id="growthLineChart"></canvas>
@@ -409,39 +722,7 @@
             </div>
         </div>
 
-        <!-- Upgrade Modal Popup -->
-        <div x-show="upgradeRequired" x-cloak class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 1050; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
-            <div class="card p-4 text-center mx-auto" style="min-width: 380px; max-width: 90vw; background: var(--bg-card); border-color: var(--color-primary);">
-                <i class="bi bi-lock-fill display-4 mb-3" style="color: var(--color-primary);"></i>
-                <h4 class="text-light fw-bold">Advanced Insights Locked</h4>
-                <p class="text-muted mb-4">You have used your free full calculations. Upgrade your account to continue unlocking deep stats, benchmarks, and custom PDF outputs.</p>
-                <div class="d-flex flex-column gap-2 justify-content-center mt-2">
-                    <a href="/register" class="btn btn-primary-cta w-100">Upgrade to Pro</a>
-                    <button type="button" class="btn text-muted p-2" @click="upgradeRequired = false; isLimitedMode = true" style="font-size: 0.9rem; text-decoration: underline;">Continue with Limited Results</button>
-                </div>
-            </div>
-        </div>
 
-        <!-- Guest Email Lead Capture Modal -->
-        <div x-show="showEmailModal" x-cloak class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 1060; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);">
-            <div class="card p-4 mx-auto" style="min-width: 400px; max-width: 90vw; background: var(--bg-card); border-color: rgba(255,255,255,0.1);">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="text-light fw-bold mb-0"><i class="bi bi-envelope-paper-fill text-primary-accent me-2"></i> Get Your Report</h5>
-                    <button type="button" class="btn-close btn-close-white" aria-label="Close" @click="showEmailModal = false"></button>
-                </div>
-                <p class="text-muted mb-4" style="font-size: 0.95rem;">Enter your email to instantly download your comprehensive engagement report.</p>
-                <form @submit.prevent="executePdfDownload">
-                    <div class="mb-3">
-                        <input type="email" class="form-control" placeholder="Enter your email address" x-model="guestEmail" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary-cta w-100" :disabled="isExporting">
-                        <span x-show="!isExporting">Download PDF <i class="bi bi-download ms-2"></i></span>
-                        <span x-show="isExporting">Generating...</span>
-                    </button>
-                    <div x-show="exportError" class="text-danger mt-2 text-center" style="font-size: 0.85rem;" x-text="exportError"></div>
-                </form>
-            </div>
-        </div>
 
         <!-- Right Column: Sidebar -->
         <div class="col-lg-4">
@@ -507,6 +788,82 @@
         </div>
 
     </div>
+    
+    <!-- CTA Banner Module (Responsive & Animated) -->
+    <div class="cta-banner p-4 p-md-5 mb-5 shadow-lg text-center" x-data>
+        <div class="position-relative z-index-1">
+            <div class="mb-3 d-inline-block p-2 rounded-circle" style="background: rgba(133, 244, 58, 0.1); border: 1px solid rgba(133, 244, 58, 0.3);">
+                <i class="bi bi-graph-up-arrow fs-2 text-primary-accent"></i>
+            </div>
+            
+            <h2 class="display-6 fw-bold text-white mb-3 tracking-tight">Need better engagement? <br class="d-none d-md-block"> Let {{ ($tool_settings['white_label_active'] ?? '0') == '1' ? ($tool_settings['custom_client_title'] ?? 'Our Team') : 'Mapsily' }} grow your brand.</h2>
+            <p class="lead text-muted mx-auto mb-4" style="max-width: 600px;">
+                Stop guessing what works. Our advanced growth analysts map your metrics directly against aggressive industry benchmarks building a personalized strategy engineered for scale.
+            </p>
+            
+            <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-4">
+                <a href="#" class="btn btn-primary-cta btn-lg px-5">
+                    <i class="bi bi-telephone-outbound me-2"></i> Book Free Strategy Call
+                </a>
+                <a href="/register" class="btn btn-outline-light btn-lg px-5">
+                    <i class="bi bi-rocket-takeoff me-2 text-primary-accent"></i> Upgrade to Premium
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals (Detached from grid rows to prevent layout/z-index trapping) -->
+    
+    <!-- Upgrade Modal Popup -->
+    <template x-teleport="body">
+        <div x-show="upgradeRequired" x-cloak class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1060; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+            <div class="w-100 h-100 d-flex align-items-center justify-content-center position-relative">
+                <!-- Invisible close mask layer -->
+                <div class="position-absolute w-100 h-100" style="z-index: 1; cursor: pointer;" @click="upgradeRequired = false; isLimitedMode = true"></div>
+                <div class="card p-4 text-center mx-auto position-relative" style="z-index: 2; min-width: 380px; max-width: 90vw; background: var(--bg-card); border-color: var(--color-primary);">
+                    <i class="bi bi-lock-fill display-4 mb-3" style="color: var(--color-primary);"></i>
+                    <h4 class="text-light fw-bold">Advanced Insights Locked</h4>
+                    <p class="text-muted mb-4">You have used your free full calculations. Upgrade your account to continue unlocking deep stats, benchmarks, and custom PDF outputs.</p>
+                    <div class="d-flex flex-column gap-2 justify-content-center mt-2">
+                        <a href="/register" class="btn btn-primary-cta w-100">Upgrade to Pro</a>
+                        <button type="button" class="btn text-muted p-2" @click="upgradeRequired = false; isLimitedMode = true" style="font-size: 0.9rem; text-decoration: underline; background: transparent; border: none; cursor: pointer;">Continue with Limited Results</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Guest Email Lead Capture Modal -->
+    <template x-teleport="body">
+        <div x-show="showEmailModal" x-cloak class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1060; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);">
+            <div class="w-100 h-100 d-flex align-items-center justify-content-center position-relative">
+                <!-- Invisible close mask layer -->
+                <div class="position-absolute w-100 h-100" style="z-index: 1; cursor: pointer;" @click="showEmailModal = false"></div>
+                <div class="card p-4 mx-auto position-relative" style="z-index: 2; min-width: 400px; max-width: 90vw; background: var(--bg-card); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0px 10px 40px rgba(0,0,0,0.5);">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-light fw-bold mb-0"><i class="bi bi-envelope-paper-fill text-primary-accent me-2"></i> Get Your Report</h5>
+                        <button type="button" aria-label="Close" @click.stop.prevent="showEmailModal = false" style="background: transparent; border: none; outline: none; cursor: pointer; padding: 5px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-muted mb-4" style="font-size: 0.95rem;">Enter your email to instantly download your comprehensive engagement report.</p>
+                    <form @submit.prevent="executePdfDownload">
+                        <div class="mb-3">
+                            <input type="email" class="form-control text-white" placeholder="Enter your email address" x-model="guestEmail" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary-cta w-100" :disabled="isExporting">
+                            <span x-show="!isExporting">Download PDF <i class="bi bi-download ms-2"></i></span>
+                            <span x-show="isExporting">Generating...</span>
+                        </button>
+                        <div x-show="exportError" class="text-danger mt-3 fw-medium text-center" style="font-size: 0.85rem;" x-text="exportError"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 
 @push('scripts')
@@ -680,7 +1037,7 @@
                     
                     if (response.status === 403 && data.error === 'guest_limit_reached') {
                         this.errorMode = true;
-                        this.errorMsg = data.message;
+                        this.errorMsg = data.message || "You have reached your free limit. Please sign up to continue.";
                         this.isCalculating = false;
                         return;
                     }
@@ -733,6 +1090,11 @@
                 } finally {
                     this.isCalculating = false;
                 }
+            },
+            
+            resetError() {
+                this.errorMode = false;
+                this.errorMsg = '';
             },
 
             startPdfDownload() {
