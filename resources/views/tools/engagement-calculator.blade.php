@@ -211,14 +211,87 @@
                         </div>
 
                         <!-- Fake Engagement Warning Card -->
-                        <div x-show="hasFakeEngagement" x-cloak class="card mt-4" style="background-color: #272727; border: 2px solid #85f43a;">
-                            <div class="card-body">
-                                <h5 class="text-light"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Engagement Insight</h5>
-                                <ul class="text-light mb-0" style="opacity: 0.9;">
-                                    <template x-for="msg in fakeMessages">
-                                        <li class="mb-1" x-text="msg"></li>
-                                    </template>
-                                </ul>
+                        <!-- Old single fake engagement card removed in favor of Grid layout below -->
+
+                        <!-- Calculation Results Grid -->
+                        <div x-show="hasResults && !isCalculating" x-transition.opacity.duration.500ms class="mt-5">
+                            <h4 class="mb-4 text-light"><i class="bi bi-stars text-primary-accent me-2"></i> Your Engagement Report</h4>
+                            
+                            <div class="row g-4">
+                                <!-- Engagement Rate Card -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 mb-0" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
+                                        <div class="card-body text-center d-flex flex-column justify-content-center py-5">
+                                            <h6 class="text-muted fw-normal text-uppercase letter-spacing-1 mb-3"><i class="bi bi-activity text-primary-accent me-2"></i> Engagement Rate</h6>
+                                            <h2 class="display-3 fw-bold text-light mb-0" x-text="resultEr + '%'"></h2>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quality Score Card -->
+                                <div class="col-md-6">
+                                    <div class="card h-100 mb-0" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
+                                        <div class="card-body text-center d-flex flex-column justify-content-center py-5">
+                                            <h6 class="text-muted fw-normal text-uppercase letter-spacing-1 mb-3"><i class="bi bi-award text-primary-accent me-2"></i> Quality Score</h6>
+                                            <h2 class="display-5 fw-bold mb-0" :class="getScoreColorClass(resultScore)" x-text="resultScore"></h2>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Industry Benchmark -->
+                                <div class="col-md-6" x-show="!isLimitedMode && hasBenchmark">
+                                    <div class="card h-100 mb-0" :style="`border-top: 3px solid ${benchmarkColor}; background-color: var(--bg-card); border-left: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05);`">
+                                        <div class="card-body">
+                                            <h6 class="text-muted mb-3"><i class="bi bi-bar-chart-fill text-primary-accent me-2"></i> Industry Benchmark</h6>
+                                            <h5 class="text-light lh-base mt-2" x-text="benchmarkMessage"></h5>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Real recommendations / insights -->
+                                <div class="col-md-6" x-show="!isLimitedMode">
+                                    <div class="card h-100 mb-0" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
+                                        <div class="card-body">
+                                            <h6 class="text-muted mb-3"><i class="bi bi-lightbulb-fill text-primary-accent me-2"></i> Recommendations</h6>
+                                            <ul class="text-light mt-2 mb-0 ps-3" style="font-size: 0.95rem; opacity: 0.9;">
+                                                <template x-for="rec in resultRecommendations">
+                                                    <li class="mb-2" x-text="rec"></li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- What to post next -->
+                                <div class="col-md-6" x-show="!isLimitedMode && hasPostNext">
+                                    <div class="card h-100 mb-0" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
+                                        <div class="card-body">
+                                            <h6 class="text-muted"><i class="bi bi-collection-play-fill text-primary-accent me-2"></i> What To Post Next</h6>
+                                            <div class="mt-3">
+                                                <template x-for="item in postNextArray">
+                                                    <div class="d-flex align-items-start mb-2">
+                                                        <i class="bi bi-check-circle-fill text-primary-accent me-2 mt-1"></i>
+                                                        <span class="text-light" style="font-size: 0.95rem; opacity: 0.9;" x-text="item"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Fake Engagement Warning -->
+                                <div class="col-md-6" x-show="hasFakeEngagement">
+                                    <div class="card h-100 mb-0" style="background-color: rgba(220,53,69,0.08); border: 1px solid rgba(220,53,69,0.4);">
+                                        <div class="card-body">
+                                            <h6 class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Fake Engagement Warning</h6>
+                                            <ul class="text-light mt-3 mb-0 ps-3" style="font-size: 0.95rem; opacity: 0.9;">
+                                                <template x-for="msg in fakeMessages">
+                                                    <li class="mb-2 text-white" x-text="msg"></li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -457,6 +530,15 @@
             upgradeRequired: false,
             errorMode: false,
             errorMsg: '',
+            
+            resultEr: 0,
+            resultScore: '',
+            resultRecommendations: [],
+            hasBenchmark: false,
+            benchmarkMessage: '',
+            benchmarkColor: '#85f43a',
+            hasPostNext: false,
+            postNextArray: [],
 
             hasCompetitorData: false,
             compResultName: 'Competitor',
@@ -473,6 +555,12 @@
             simRate: 3.5,
             
             // Formula calculation outputs
+            getScoreColorClass(score) {
+                if (score === 'Viral' || score === 'High') return 'text-primary-accent';
+                if (score === 'Average') return 'text-warning';
+                return 'text-danger';
+            },
+            
             get calculatedEr() {
                 let f = Number(this.followers);
                 if (!f) return 0;
@@ -564,6 +652,27 @@
 
                     this.isLimitedMode = data.is_limited_mode || false;
                     this.upgradeRequired = data.upgrade_required || false;
+                    
+                    this.resultEr = data.engagement_rate;
+                    this.resultScore = data.engagement_score;
+                    // Prefer advanced insight improvement tips if available, fall back to basic recommendations
+                    this.resultRecommendations = (data.improvement_tips && data.improvement_tips.length) 
+                        ? data.improvement_tips 
+                        : data.recommendations;
+                    
+                    if (data.what_to_post_next && data.what_to_post_next.recommendations && data.what_to_post_next.recommendations.length > 0) {
+                        this.hasPostNext = true;
+                        this.postNextArray = data.what_to_post_next.recommendations;
+                    }
+                    
+                    if (data.benchmark_comparison && !this.isLimitedMode) {
+                        this.hasBenchmark = true;
+                        this.benchmarkMessage = data.benchmark_comparison.message;
+                        this.benchmarkColor = data.benchmark_comparison.badge_color === 'green' ? '#85f43a' : (data.benchmark_comparison.badge_color === 'orange' ? '#f59e0b' : '#ef4444');
+                        this.industryAvgRate = data.benchmark_comparison.benchmark_rate;
+                        this.updateBarChart();
+                    }
+                    
                     this.hasResults = true;
                     
                     if (data.fake_engagement_flag) {
@@ -581,11 +690,6 @@
                         this.compResultRate = data.competitor_comparison.competitor_engagement_rate;
                         this.rateDiff = data.competitor_comparison.er_difference_absolute;
                         this.compMessage = data.competitor_comparison.message;
-                    }
-                    
-                    if (data.benchmark_comparison && !this.isLimitedMode) {
-                        this.industryAvgRate = data.benchmark_comparison.benchmark_rate;
-                        this.updateBarChart();
                     }
 
                 } catch (e) {
