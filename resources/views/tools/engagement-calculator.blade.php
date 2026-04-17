@@ -289,6 +289,33 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Visual Analytics Card -->
+                        <div x-show="step === 4" x-transition class="card mt-4" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
+                            <div class="card-body">
+                                <h5 class="text-light mb-4"><i class="bi bi-pie-chart-fill text-primary-accent me-2"></i> Visual Analytics</h5>
+                                
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <div class="p-3 rounded bg-dark border" style="border-color: rgba(255,255,255,0.05) !important;">
+                                            <h6 class="text-muted text-center mb-3" style="font-size:0.85rem">Engagement vs Industry Average</h6>
+                                            <div style="position: relative; height:220px;">
+                                                <canvas id="engagementBarChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 rounded bg-dark border" style="border-color: rgba(255,255,255,0.05) !important;">
+                                            <h6 class="text-muted text-center mb-3" style="font-size:0.85rem">Monthly Growth Projection</h6>
+                                            <div style="position: relative; height:220px;">
+                                                <canvas id="growthLineChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </form>
                 </div>
             </div>
@@ -361,6 +388,7 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('calculatorForm', () => ({
@@ -416,6 +444,13 @@
             simRate: 3.5,
             
             // Formula calculation outputs
+            get calculatedEr() {
+                let f = Number(this.followers);
+                if (!f) return 0;
+                let interactions = (Number(this.likes) || 0) + (Number(this.comments) || 0) + (Number(this.shares) || 0);
+                return (interactions / f) * 100;
+            },
+            
             get simFutureFollowers() {
                 let currentFoll = Number(this.followers) || 1000; // default 1000 to show logic early
                 let rateDecimal = Number(this.simRate) / 100;
@@ -455,6 +490,146 @@
             
             canSubmit() {
                 return this.industry !== '';
+            },
+
+            // Chart Control vars
+            barChart: null,
+            lineChart: null,
+            industryAvgRate: 3.2, // Fallback baseline mock before api connect
+
+            init() {
+                this.$watch('step', value => {
+                    if (value === 4) {
+                        this.$nextTick(() => {
+                            this.initCharts();
+                        });
+                    }
+                });
+                
+                this.$watch('simFrequency', () => this.updateLineChart());
+                this.$watch('simRate', () => this.updateLineChart());
+                this.$watch('followers', () => { this.updateLineChart(); this.updateBarChart(); });
+                this.$watch('likes', () => this.updateBarChart());
+                this.$watch('comments', () => this.updateBarChart());
+                this.$watch('shares', () => this.updateBarChart());
+            },
+
+            initCharts() {
+                Chart.defaults.color = '#a1a1aa';
+                Chart.defaults.font.family = "'Inter', sans-serif";
+                
+                // Bar Chart
+                const barCtx = document.getElementById('engagementBarChart');
+                if (barCtx && !this.barChart) {
+                    this.barChart = new Chart(barCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['You', 'Industry Avg'],
+                            datasets: [{
+                                label: 'Engagement Rate (%)',
+                                data: [this.calculatedEr, this.industryAvgRate],
+                                backgroundColor: ['#85f43a', '#47A805'],
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(255,255,255,0.05)' }
+                                },
+                                x: {
+                                    grid: { display: false }
+                                }
+                            }
+                        }
+                    });
+                } else if (this.barChart) {
+                     this.updateBarChart();
+                }
+
+                // Line Chart
+                const lineCtx = document.getElementById('growthLineChart');
+                if (lineCtx && !this.lineChart) {
+                    this.lineChart = new Chart(lineCtx, {
+                        type: 'line',
+                        data: this.getLineChartData(),
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.parsed.y.toLocaleString() + ' Followers';
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    grid: { color: 'rgba(255,255,255,0.05)' }
+                                },
+                                x: {
+                                    grid: { color: 'rgba(255,255,255,0.05)' }
+                                }
+                            },
+                            elements: {
+                                line: {
+                                    tension: 0.3,
+                                    borderColor: '#85f43a',
+                                    borderWidth: 3
+                                },
+                                point: {
+                                    backgroundColor: '#47A805',
+                                    radius: 4,
+                                    hoverRadius: 6
+                                }
+                            }
+                        }
+                    });
+                } else if (this.lineChart) {
+                     this.updateLineChart();
+                }
+            },
+            
+            getLineChartData() {
+                let baseFoll = Number(this.followers) || 1000;
+                let rate = Number(this.simRate) / 100;
+                let freq = Number(this.simFrequency);
+                
+                let m1 = baseFoll + (rate * freq * 30);
+                let m2 = baseFoll + (rate * freq * 60);
+                let m3 = baseFoll + (rate * freq * 90);
+                
+                return {
+                    labels: ['Current', 'Month 1', 'Month 2', 'Month 3'],
+                    datasets: [{
+                        label: 'Estimated Followers',
+                        data: [baseFoll, m1, m2, m3]
+                    }]
+                };
+            },
+            
+            updateLineChart() {
+                if (this.lineChart) {
+                    this.lineChart.data = this.getLineChartData();
+                    this.lineChart.update();
+                }
+            },
+            
+            updateBarChart() {
+                if (this.barChart) {
+                    this.barChart.data.datasets[0].data = [this.calculatedEr, this.industryAvgRate];
+                    this.barChart.update();
+                }
             }
         }))
     })
