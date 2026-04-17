@@ -250,6 +250,45 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Engagement Growth Simulator Card -->
+                        <div x-show="step === 4" x-transition class="card mt-4" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
+                            <div class="card-body">
+                                <h5 class="text-light mb-3"><i class="bi bi-graph-up-arrow text-primary-accent me-2"></i> Engagement Growth Simulator</h5>
+                                <p class="text-muted" style="font-size: 0.9rem;">Estimate your growth after 3 months by adjusting your target monthly posting frequency and engagement rate.</p>
+                                
+                                <div class="mb-4 mt-4">
+                                    <label class="form-label d-flex justify-content-between text-light">
+                                        <span>Posting Frequency (Posts/Month)</span>
+                                        <span class="fw-bold text-primary-accent" x-text="simFrequency + ' posts'"></span>
+                                    </label>
+                                    <input type="range" class="form-range" min="1" max="90" x-model.number="simFrequency">
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label d-flex justify-content-between text-light">
+                                        <span>Target Engagement Rate (%)</span>
+                                        <span class="fw-bold text-primary-accent" x-text="simRate + '%'"></span>
+                                    </label>
+                                    <input type="range" class="form-range" min="0.1" max="15" step="0.1" x-model.number="simRate">
+                                </div>
+                                
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="p-3 rounded bg-dark border text-center" style="border-color: rgba(255,255,255,0.1) !important;">
+                                            <div class="text-muted mb-1" style="font-size: 0.8rem;">Est. Followers (3 Months)</div>
+                                            <h4 class="text-primary-accent fw-bold mb-0" x-text="Math.floor(simFutureFollowers).toLocaleString()"></h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="p-3 rounded bg-dark border text-center" style="border-color: rgba(255,255,255,0.1) !important;">
+                                            <div class="text-muted mb-1" style="font-size: 0.8rem;">Est. Interactions (3 Months)</div>
+                                            <h4 class="text-primary-accent fw-bold mb-0" x-text="Math.floor(simFutureEngagement).toLocaleString()"></h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -371,6 +410,26 @@
             compResultRate: '0.00',
             rateDiff: '0.00',
             compMessage: 'Competitor has 2x engagement with fewer followers.',
+            
+            // Simulator Inputs
+            simFrequency: 15,
+            simRate: 3.5,
+            
+            // Formula calculation outputs
+            get simFutureFollowers() {
+                let currentFoll = Number(this.followers) || 1000; // default 1000 to show logic early
+                let rateDecimal = Number(this.simRate) / 100;
+                // Use the example logic from requirements adjusted for 3 month frame
+                let gained = (rateDecimal * Number(this.simFrequency)) * 90; 
+                return currentFoll + gained;
+            },
+            
+            get simFutureEngagement() {
+                let currentFoll = Number(this.followers) || 1000;
+                let rateDecimal = Number(this.simRate) / 100;
+                // Extrapolated interactions
+                return currentFoll * rateDecimal * Number(this.simFrequency) * 3;
+            },
             
             get totalSplit() {
                 return (Number(this.splitReels) || 0) + 
