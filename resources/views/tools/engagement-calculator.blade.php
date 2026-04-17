@@ -163,6 +163,23 @@
                                     </div>
                                 </div>
                             </div>
+                            
+                            <hr class="border-secondary opacity-25 mt-4 mb-4">
+                            <h5 class="mb-3">Competitor Comparison <span class="text-muted fw-normal" style="font-size: 0.9rem;">(Optional)</span></h5>
+                            <div class="row g-3 mb-4">
+                                <div class="col-sm-4">
+                                    <label class="form-label text-muted" style="font-size:0.85rem">Competitor Name</label>
+                                    <input type="text" class="form-control" x-model="compName" placeholder="e.g. Brand X">
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="form-label text-muted" style="font-size:0.85rem">Followers</label>
+                                    <input type="number" class="form-control" x-model.number="compFollowers" placeholder="0">
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="form-label text-muted" style="font-size:0.85rem">Engagement Rate (%)</label>
+                                    <input type="number" class="form-control" x-model.number="compRate" step="0.01" placeholder="0.00">
+                                </div>
+                            </div>
                         </div>
 
                         <hr class="border-secondary opacity-25 mt-5 mb-4">
@@ -193,6 +210,44 @@
                                         <li class="mb-1" x-text="msg"></li>
                                     </template>
                                 </ul>
+                            </div>
+                        </div>
+
+                        <!-- Competitor Comparison Card -->
+                        <div x-show="hasCompetitorData" x-cloak class="card mt-4" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
+                            <div class="card-body">
+                                <h5 class="text-light mb-3"><i class="bi bi-people-fill text-primary-accent me-2"></i> Competitor Analysis</h5>
+                                
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-dark table-bordered mb-0" style="background-color: var(--bg-main);">
+                                        <thead>
+                                            <tr>
+                                                <th>Metric</th>
+                                                <th>You</th>
+                                                <th x-text="compResultName || 'Competitor'"></th>
+                                                <th>Difference</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Followers</td>
+                                                <td x-text="youFollowers"></td>
+                                                <td x-text="compResultFollowers"></td>
+                                                <td :class="followersDiff > 0 ? 'text-success' : 'text-danger'" x-text="(followersDiff > 0 ? '+' : '') + followersDiff"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Engagement Rate</td>
+                                                <td x-text="youRate + '%'"></td>
+                                                <td x-text="compResultRate + '%'"></td>
+                                                <td :class="rateDiff > 0 ? 'text-success' : 'text-danger'" x-text="(rateDiff > 0 ? '+' : '') + rateDiff + '%'"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="p-3 rounded bg-dark border" style="border-color: var(--color-primary) !important;">
+                                    <p class="mb-0 fw-bold text-primary-accent" x-text="compMessage"></p>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -294,6 +349,11 @@
             splitCarousel: '',
             splitVideo: '',
             
+            // Competitor Fields
+            compName: '',
+            compFollowers: '',
+            compRate: '',
+            
             // Result Variables
             hasFakeEngagement: false, // Set to true when fake engagement is detected by backend
             fakeMessages: [
@@ -301,6 +361,16 @@
                 "Your audience reacts but does not interact.",
                 "You may be attracting passive followers."
             ], // These will be dynamically populated from the API response
+
+            hasCompetitorData: false,
+            compResultName: 'Competitor',
+            youFollowers: '0',
+            compResultFollowers: '0',
+            followersDiff: '0',
+            youRate: '0.00',
+            compResultRate: '0.00',
+            rateDiff: '0.00',
+            compMessage: 'Competitor has 2x engagement with fewer followers.',
             
             get totalSplit() {
                 return (Number(this.splitReels) || 0) + 

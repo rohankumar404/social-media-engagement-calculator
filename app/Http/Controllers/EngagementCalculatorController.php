@@ -21,6 +21,15 @@ class EngagementCalculatorController extends Controller
             'shares' => 'required|numeric|min:0',
             'total_posts' => 'nullable|numeric|min:1',
             'industry_id' => 'nullable|integer|exists:industry_benchmarks,id',
+            'platform' => 'nullable|string',
+            'saves' => 'nullable|numeric|min:0',
+            'split_reels' => 'nullable|numeric|min:0|max:100',
+            'split_images' => 'nullable|numeric|min:0|max:100',
+            'split_carousel' => 'nullable|numeric|min:0|max:100',
+            'split_video' => 'nullable|numeric|min:0|max:100',
+            'competitor_name' => 'nullable|string',
+            'competitor_followers' => 'nullable|numeric|min:1',
+            'competitor_engagement_rate' => 'nullable|numeric|min:0',
         ]);
 
         $followers = $request->input('followers');
@@ -28,6 +37,15 @@ class EngagementCalculatorController extends Controller
         $comments = $request->input('comments');
         $shares = $request->input('shares');
         $total_posts = $request->input('total_posts');
+        $platform = $request->input('platform', '');
+        $saves = $request->input('saves', 0);
+        $split_reels = $request->input('split_reels', 0);
+        $split_carousel = $request->input('split_carousel', 0);
+        $split_video = $request->input('split_video', 0);
+        
+        $competitor_name = $request->input('competitor_name');
+        $competitor_followers = $request->input('competitor_followers');
+        $competitor_engagement_rate = $request->input('competitor_engagement_rate');
 
         $engagement_rate = (($likes + $comments + $shares) / $followers) * 100;
 
@@ -78,13 +96,71 @@ class EngagementCalculatorController extends Controller
             ];
         }
 
+        $generated = $this->generateInsights($followers, $likes, $comments, $shares, $engagement_rate, $saves, $platform);
+        $insights = $generated['insights'];
+        $improvement_tips = $generated['tips'];
+
+        $content_recommendations = [];
+        if (($platform === 'Instagram' || $platform === 'TikTok') && $split_reels < 30) {
+            $content_recommendations[] = 'Recommend increasing reels by 40%';
+        }
+        if ($platform === 'LinkedIn' && $split_carousel < 20) {
+            $content_recommendations[] = 'Recommend more educational carousel posts';
+        }
+        if ($platform === 'YouTube' && $split_video < 40) {
+            $content_recommendations[] = 'Recommend more short-form videos';
+        }
+
+        $what_to_post_next = [
+            'title' => 'What To Post Next',
+            'recommendations' => empty($content_recommendations) ? ['Maintain your optimal content mix while monitoring changing trends.'] : $content_recommendations
+        ];
+
+        $competitor_comparison = null;
+        if ($competitor_name && $competitor_followers && $competitor_engagement_rate !== null) {
+            $followers_diff = $followers - $competitor_followers;
+            $er_diff_absolute = $engagement_rate - $competitor_engagement_rate;
+            
+            if ($competitor_engagement_rate > 0) {
+                $er_diff_relative = round((abs($er_diff_absolute) / $competitor_engagement_rate) * 100, 1);
+            } else {
+                $er_diff_relative = 0;
+            }
+
+            if ($engagement_rate > $competitor_engagement_rate && $followers < $competitor_followers) {
+                 $message = "You are outperforming {$competitor_name} by {$er_diff_relative}% despite having fewer followers.";
+            } elseif ($engagement_rate < $competitor_engagement_rate && $followers > $competitor_followers) {
+                 $multiplier = round($competitor_engagement_rate / max($engagement_rate, 0.01), 1);
+                 $message = "{$competitor_name} has {$multiplier}x engagement with fewer followers.";
+            } elseif ($engagement_rate > $competitor_engagement_rate) {
+                 $message = "You are outperforming {$competitor_name} by {$er_diff_relative}%.";
+            } else {
+                 $message = "{$competitor_name} is outperforming you by {$er_diff_relative}%.";
+            }
+
+            $competitor_comparison = [
+                'competitor_name' => $competitor_name,
+                'competitor_followers' => $competitor_followers,
+                'competitor_engagement_rate' => $competitor_engagement_rate,
+                'you_followers' => $followers,
+                'you_engagement_rate' => round($engagement_rate, 2),
+                'followers_difference' => $followers_diff,
+                'er_difference_absolute' => round($er_diff_absolute, 2),
+                'message' => $message
+            ];
+        }
+
         $report_data = [
             'engagement_rate' => $engagement_rate,
             'engagement_score' => $engagement_score,
             'engagement_per_post' => $engagement_per_post,
             'recommendations' => $recommendations,
             'fake_engagement_flag' => $fake_engagement_flag,
-            'fake_engagement_messages' => $fake_engagement_messages
+            'fake_engagement_messages' => $fake_engagement_messages,
+            'insights' => $insights,
+            'improvement_tips' => $improvement_tips,
+            'what_to_post_next' => $what_to_post_next,
+            'competitor_comparison' => $competitor_comparison
         ];
 
         $benchmark_comparison = null;
@@ -140,6 +216,10 @@ class EngagementCalculatorController extends Controller
             'benchmark_comparison' => $benchmark_comparison,
             'fake_engagement_flag' => $fake_engagement_flag,
             'fake_engagement_messages' => $fake_engagement_messages,
+            'insights' => $insights,
+            'improvement_tips' => $improvement_tips,
+            'what_to_post_next' => $what_to_post_next,
+            'competitor_comparison' => $competitor_comparison,
             'report_json' => $report_json
         ]);
     }
@@ -161,5 +241,79 @@ class EngagementCalculatorController extends Controller
     public function dashboard()
     {
         return view('calculator.dashboard');
+    }
+
+    private function generateInsights($followers, $likes, $comments, $shares, $engagement_rate, $saves, $platform)
+    {
+        $insights = [];
+        $tips = [];
+
+        // Rules for insights
+        if ($followers > 10000 && $engagement_rate < 1.0) {
+            $insights[] = "Your account size is growing faster than audience quality.";
+        }
+
+        if ($likes > 100 && $comments < ($likes * 0.05)) {
+            $insights[] = "Your content lacks conversation triggers.";
+        }
+
+        if ($shares < ($likes * 0.02)) {
+            $insights[] = "Your content is not valuable enough for people to share.";
+        }
+
+        if ($platform === 'Instagram' && $saves < ($likes * 0.05)) {
+            $insights[] = "Your posts are not considered useful enough to revisit.";
+        }
+
+        // Fill generic insights if rules didn't hit at least 3
+        if (count($insights) < 3) {
+            $generic_insights = [
+                "Your posting consistency might be affecting your algorithmic reach.",
+                "Audience interaction is heavily skewed towards passive engagement.",
+                "Your content formats may not align perfectly with what your audience expects.",
+                "Consider experimenting with new content styles to refresh engagement."
+            ];
+            foreach ($generic_insights as $gi) {
+                if (!in_array($gi, $insights)) {
+                    $insights[] = $gi;
+                }
+                if (count($insights) >= 3) break;
+            }
+        }
+
+        // Tip bank
+        $all_tips = [
+            "Ask questions in captions",
+            "Post more reels",
+            "Use storytelling",
+            "Publish case studies",
+            "Use stronger CTA in posts"
+        ];
+        
+        // Context-aware tip adding
+        if (in_array("Your content lacks conversation triggers.", $insights)) {
+            $tips[] = "Ask questions in captions";
+        }
+        if (in_array("Your content is not valuable enough for people to share.", $insights)) {
+            $tips[] = "Use storytelling";
+            $tips[] = "Publish case studies";
+        }
+        if (in_array("Your posts are not considered useful enough to revisit.", $insights)) {
+            $tips[] = "Use stronger CTA in posts";
+            $tips[] = "Post more reels";
+        }
+        
+        // Ensure at least 3 tips are selected
+        foreach ($all_tips as $tip) {
+            if (!in_array($tip, $tips)) {
+                $tips[] = $tip;
+            }
+            if (count($tips) >= 3) break;
+        }
+
+        return [
+            'insights' => array_slice($insights, 0, max(3, count($insights))), 
+            'tips' => array_slice($tips, 0, max(3, count($tips))) 
+        ];
     }
 }
