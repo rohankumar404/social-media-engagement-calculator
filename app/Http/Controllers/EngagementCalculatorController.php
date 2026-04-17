@@ -255,6 +255,21 @@ class EngagementCalculatorController extends Controller
 
         $report_json = json_encode($report_data);
 
+        if (auth()->check() && !$is_limited_mode) {
+            \App\Models\EngagementReport::create([
+                'user_id' => auth()->id(),
+                'platform' => $platform ?: 'Unknown',
+                'followers' => $followers,
+                'likes' => $likes,
+                'comments' => $comments,
+                'shares' => $shares,
+                'saves' => $saves,
+                'engagement_rate' => $engagement_rate,
+                'fake_engagement_flag' => $fake_engagement_flag,
+                'report_json' => $report_json
+            ]);
+        }
+
         return response()->json([
             'engagement_rate' => round($engagement_rate, 2),
             'engagement_score' => $engagement_score,
@@ -314,7 +329,13 @@ class EngagementCalculatorController extends Controller
 
     public function dashboard()
     {
-        return view('calculator.dashboard');
+        $reports = \App\Models\EngagementReport::where('user_id', auth()->id())->latest()->get();
+        $usageLimit = \App\Models\UserUsageLimit::firstOrCreate(
+            ['user_id' => auth()->id()],
+            ['usage_count' => 0, 'is_premium' => false]
+        );
+
+        return view('dashboard', compact('reports', 'usageLimit'));
     }
 
     private function generateInsights($followers, $likes, $comments, $shares, $engagement_rate, $saves, $platform)
