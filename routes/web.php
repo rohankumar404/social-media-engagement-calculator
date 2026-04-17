@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EngagementCalculatorController;
 
 Route::get('/', [EngagementCalculatorController::class, 'index']);
+Route::get('/calculator', [EngagementCalculatorController::class, 'index'])->name('calculator');
 
 Route::post('/calculate', [EngagementCalculatorController::class, 'calculate']);
 Route::post('/download-report', [EngagementCalculatorController::class, 'downloadReport']);
