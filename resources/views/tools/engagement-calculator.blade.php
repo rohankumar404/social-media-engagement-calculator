@@ -215,7 +215,13 @@
 
                         <!-- Calculation Results Grid -->
                         <div x-show="hasResults && !isCalculating" x-transition.opacity.duration.500ms class="mt-5">
-                            <h4 class="mb-4 text-light"><i class="bi bi-stars text-primary-accent me-2"></i> Your Engagement Report</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="mb-0 text-light"><i class="bi bi-stars text-primary-accent me-2"></i> Your Engagement Report</h4>
+                                <button type="button" class="btn btn-outline-light btn-sm" @click="startPdfDownload">
+                                    <span x-show="!isExporting"><i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Export PDF</span>
+                                    <span x-show="isExporting">Exporting... <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span></span>
+                                </button>
+                            </div>
                             
                             <div class="row g-4">
                                 <!-- Engagement Rate Card -->
@@ -416,6 +422,27 @@
             </div>
         </div>
 
+        <!-- Guest Email Lead Capture Modal -->
+        <div x-show="showEmailModal" x-cloak class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 1060; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);">
+            <div class="card p-4 mx-auto" style="min-width: 400px; max-width: 90vw; background: var(--bg-card); border-color: rgba(255,255,255,0.1);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-light fw-bold mb-0"><i class="bi bi-envelope-paper-fill text-primary-accent me-2"></i> Get Your Report</h5>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close" @click="showEmailModal = false"></button>
+                </div>
+                <p class="text-muted mb-4" style="font-size: 0.95rem;">Enter your email to instantly download your comprehensive engagement report.</p>
+                <form @submit.prevent="executePdfDownload">
+                    <div class="mb-3">
+                        <input type="email" class="form-control" placeholder="Enter your email address" x-model="guestEmail" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary-cta w-100" :disabled="isExporting">
+                        <span x-show="!isExporting">Download PDF <i class="bi bi-download ms-2"></i></span>
+                        <span x-show="isExporting">Generating...</span>
+                    </button>
+                    <div x-show="exportError" class="text-danger mt-2 text-center" style="font-size: 0.85rem;" x-text="exportError"></div>
+                </form>
+            </div>
+        </div>
+
         <!-- Right Column: Sidebar -->
         <div class="col-lg-4">
             
@@ -531,6 +558,14 @@
             errorMode: false,
             errorMsg: '',
             
+            // PDF Export logic
+            isExporting: false,
+            showEmailModal: false,
+            guestEmail: '',
+            exportError: '',
+            cachedReportJson: '',
+            isAuthenticated: {{ auth()->check() ? 'true' : 'false' }},
+
             resultEr: 0,
             resultScore: '',
             resultRecommendations: [],
@@ -674,6 +709,7 @@
                     }
                     
                     this.hasResults = true;
+                    this.cachedReportJson = data.report_json;
                     
                     if (data.fake_engagement_flag) {
                         this.hasFakeEngagement = true;
@@ -696,6 +732,68 @@
                     console.error("Calculation failed", e);
                 } finally {
                     this.isCalculating = false;
+                }
+            },
+
+            startPdfDownload() {
+                this.exportError = '';
+                if (!this.isAuthenticated) {
+                    this.showEmailModal = true;
+                } else {
+                    this.executePdfDownload();
+                }
+            },
+
+            async executePdfDownload() {
+                if (!this.isAuthenticated && !this.guestEmail) {
+                    this.exportError = 'Email is required';
+                    return;
+                }
+
+                this.isExporting = true;
+                this.exportError = '';
+
+                try {
+                    const response = await fetch('/download-report', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/pdf'
+                        },
+                        body: JSON.stringify({
+                            report_data: this.cachedReportJson,
+                            email: this.guestEmail
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        this.exportError = err.message || 'Failed to generate PDF';
+                        this.isExporting = false;
+                        return;
+                    }
+
+                    // Convert stream to blob
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    // Provide a filename hook matching the backend
+                    let dateStr = new Date().toISOString().slice(0,10);
+                    a.download = `engagement-report-${dateStr}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    this.showEmailModal = false;
+
+                } catch (e) {
+                    console.error("PDF generation failed:", e);
+                    this.exportError = 'An unexpected error occurred.';
+                } finally {
+                    this.isExporting = false;
                 }
             },
 

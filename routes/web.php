@@ -9,6 +9,7 @@ Route::get('/', function () {
 });
 
 Route::post('/calculate', [EngagementCalculatorController::class, 'calculate']);
+Route::post('/download-report', [EngagementCalculatorController::class, 'downloadReport']);
 
 Route::get('/dashboard', function () {
     return view('dashboard');

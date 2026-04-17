@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Lead;
 use Illuminate\Support\Facades\DB;
 
 class EngagementCalculatorController extends Controller
@@ -277,12 +279,34 @@ class EngagementCalculatorController extends Controller
             'report_json' => 'required|json'
         ]);
 
-        // Logic to save report_json to database could go here
-        
         return response()->json([
             'success' => true,
             'message' => 'Report saved successfully'
         ]);
+    }
+
+    public function downloadReport(Request $request)
+    {
+        $request->validate([
+            'report_data' => 'required|string',
+        ]);
+
+        $data = json_decode($request->input('report_data'), true);
+
+        if (!auth()->check()) {
+            $request->validate([
+                'email' => 'required|email|max:255'
+            ]);
+
+            \App\Models\Lead::firstOrCreate([
+                'email' => $request->input('email')
+            ]);
+        }
+
+        $pdf = Pdf::loadView('pdf.engagement-report', compact('data'));
+
+        $date = date('Y-m-d');
+        return $pdf->download("engagement-report-{$date}.pdf");
     }
 
     public function dashboard()
