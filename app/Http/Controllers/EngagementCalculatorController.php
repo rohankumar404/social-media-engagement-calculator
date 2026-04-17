@@ -47,6 +47,38 @@ class EngagementCalculatorController extends Controller
         $competitor_followers = $request->input('competitor_followers');
         $competitor_engagement_rate = $request->input('competitor_engagement_rate');
 
+        $is_limited_mode = false;
+        $upgrade_required = false;
+
+        if (!auth()->check()) {
+            $guest_usage = session('guest_calculator_uses', 0);
+            if ($guest_usage >= 2) {
+                return response()->json([
+                    'error' => 'guest_limit_reached',
+                    'message' => 'You have reached your free limit. Please sign up to continue.'
+                ], 403);
+            }
+            session(['guest_calculator_uses' => $guest_usage + 1]);
+            $is_limited_mode = true;
+        } else {
+            $user = auth()->user();
+            $usageLimit = \App\Models\UserUsageLimit::firstOrCreate(
+                ['user_id' => $user->id],
+                ['usage_count' => 0, 'is_premium' => false]
+            );
+
+            if (!$usageLimit->is_premium) {
+                if ($usageLimit->usage_count >= 3) {
+                    $is_limited_mode = true;
+                    $upgrade_required = true;
+                } else {
+                    $usageLimit->increment('usage_count');
+                }
+            } else {
+                $usageLimit->increment('usage_count');
+            }
+        }
+
         $engagement_rate = (($likes + $comments + $shares) / $followers) * 100;
 
         $engagement_per_post = null;
@@ -160,7 +192,9 @@ class EngagementCalculatorController extends Controller
             'insights' => $insights,
             'improvement_tips' => $improvement_tips,
             'what_to_post_next' => $what_to_post_next,
-            'competitor_comparison' => $competitor_comparison
+            'competitor_comparison' => $competitor_comparison,
+            'is_limited_mode' => $is_limited_mode,
+            'upgrade_required' => $upgrade_required
         ];
 
         $benchmark_comparison = null;
@@ -206,6 +240,17 @@ class EngagementCalculatorController extends Controller
             }
         }
 
+        if ($is_limited_mode) {
+             $recommendations = [];
+             $fake_engagement_messages = [];
+             $fake_engagement_flag = false;
+             $insights = [];
+             $improvement_tips = [];
+             $what_to_post_next = null;
+             $competitor_comparison = null;
+             $benchmark_comparison = null;
+        }
+
         $report_json = json_encode($report_data);
 
         return response()->json([
@@ -220,6 +265,8 @@ class EngagementCalculatorController extends Controller
             'improvement_tips' => $improvement_tips,
             'what_to_post_next' => $what_to_post_next,
             'competitor_comparison' => $competitor_comparison,
+            'is_limited_mode' => $is_limited_mode,
+            'upgrade_required' => $upgrade_required,
             'report_json' => $report_json
         ]);
     }

@@ -196,9 +196,18 @@
                                 Next <i class="bi bi-arrow-right ms-2"></i>
                             </button>
 
-                            <button type="submit" class="btn btn-primary-cta px-4" x-show="step === 4" :disabled="!canSubmit()">
-                                Calculate Engagement <i class="bi bi-magic ms-2"></i>
+                            <button type="button" class="btn btn-primary-cta px-4" x-show="step === 4" @click="submitCalculate" :disabled="!canSubmit() || isCalculating">
+                                <span x-show="!isCalculating">Calculate Engagement <i class="bi bi-magic ms-2"></i></span>
+                                <span x-show="isCalculating">Calculating... <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span></span>
                             </button>
+                        </div>
+                        
+                        <!-- Guest Error Limit Reached -->
+                        <div x-show="errorMode" x-cloak class="alert alert-danger mt-4 border border-danger d-flex align-items-center" style="background-color: rgba(220, 53, 69, 0.1); color: #ff6b6b;">
+                            <i class="bi bi-x-circle-fill fs-4 me-3"></i>
+                            <div>
+                                <strong>Calculation Blocked!</strong> <span x-text="errorMsg"></span>
+                            </div>
                         </div>
 
                         <!-- Fake Engagement Warning Card -->
@@ -214,7 +223,7 @@
                         </div>
 
                         <!-- Competitor Comparison Card -->
-                        <div x-show="hasCompetitorData" x-cloak class="card mt-4" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
+                        <div x-show="hasResults && hasCompetitorData && !isLimitedMode" x-cloak class="card mt-4" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
                             <div class="card-body">
                                 <h5 class="text-light mb-3"><i class="bi bi-people-fill text-primary-accent me-2"></i> Competitor Analysis</h5>
                                 
@@ -252,7 +261,7 @@
                         </div>
 
                         <!-- Engagement Growth Simulator Card -->
-                        <div x-show="step === 4" x-transition class="card mt-4" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
+                        <div x-show="hasResults && step === 4" x-transition class="card mt-4" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
                             <div class="card-body">
                                 <h5 class="text-light mb-3"><i class="bi bi-graph-up-arrow text-primary-accent me-2"></i> Engagement Growth Simulator</h5>
                                 <p class="text-muted" style="font-size: 0.9rem;">Estimate your growth after 3 months by adjusting your target monthly posting frequency and engagement rate.</p>
@@ -291,7 +300,7 @@
                         </div>
 
                         <!-- Visual Analytics Card -->
-                        <div x-show="step === 4" x-transition class="card mt-4" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
+                        <div x-show="hasResults && step === 4 && !isLimitedMode" x-transition class="card mt-4" style="background-color: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);">
                             <div class="card-body">
                                 <h5 class="text-light mb-4"><i class="bi bi-pie-chart-fill text-primary-accent me-2"></i> Visual Analytics</h5>
                                 
@@ -317,6 +326,19 @@
                         </div>
 
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upgrade Modal Popup -->
+        <div x-show="upgradeRequired" x-cloak class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 1050; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+            <div class="card p-4 text-center mx-auto" style="min-width: 380px; max-width: 90vw; background: var(--bg-card); border-color: var(--color-primary);">
+                <i class="bi bi-lock-fill display-4 mb-3" style="color: var(--color-primary);"></i>
+                <h4 class="text-light fw-bold">Advanced Insights Locked</h4>
+                <p class="text-muted mb-4">You have used your free full calculations. Upgrade your account to continue unlocking deep stats, benchmarks, and custom PDF outputs.</p>
+                <div class="d-flex flex-column gap-2 justify-content-center mt-2">
+                    <a href="/register" class="btn btn-primary-cta w-100">Upgrade to Pro</a>
+                    <button type="button" class="btn text-muted p-2" @click="upgradeRequired = false; isLimitedMode = true" style="font-size: 0.9rem; text-decoration: underline;">Continue with Limited Results</button>
                 </div>
             </div>
         </div>
@@ -429,6 +451,13 @@
                 "You may be attracting passive followers."
             ], // These will be dynamically populated from the API response
 
+            hasResults: false,
+            isCalculating: false,
+            isLimitedMode: false,
+            upgradeRequired: false,
+            errorMode: false,
+            errorMsg: '',
+
             hasCompetitorData: false,
             compResultName: 'Competitor',
             youFollowers: '0',
@@ -490,6 +519,80 @@
             
             canSubmit() {
                 return this.industry !== '';
+            },
+
+            async submitCalculate() {
+                this.isCalculating = true;
+                this.errorMode = false;
+                
+                try {
+                    const response = await fetch('/calculate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            followers: this.followers,
+                            likes: this.likes,
+                            comments: this.comments,
+                            shares: this.shares,
+                            total_posts: this.posts,
+                            platform: this.platform,
+                            saves: this.saves,
+                            views: this.views,
+                            reach: this.reach,
+                            industry_id: 1, // Fallback for UI testing
+                            split_reels: this.splitReels,
+                            split_images: this.splitImages,
+                            split_carousel: this.splitCarousel,
+                            split_video: this.splitVideo,
+                            competitor_name: this.compName,
+                            competitor_followers: this.compFollowers,
+                            competitor_engagement_rate: this.compRate
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.status === 403 && data.error === 'guest_limit_reached') {
+                        this.errorMode = true;
+                        this.errorMsg = data.message;
+                        this.isCalculating = false;
+                        return;
+                    }
+
+                    this.isLimitedMode = data.is_limited_mode || false;
+                    this.upgradeRequired = data.upgrade_required || false;
+                    this.hasResults = true;
+                    
+                    if (data.fake_engagement_flag) {
+                        this.hasFakeEngagement = true;
+                        this.fakeMessages = data.fake_engagement_messages;
+                    }
+                    
+                    if (data.competitor_comparison && !this.isLimitedMode) {
+                        this.hasCompetitorData = true;
+                        this.compResultName = data.competitor_comparison.competitor_name;
+                        this.youFollowers = data.competitor_comparison.you_followers;
+                        this.compResultFollowers = data.competitor_comparison.competitor_followers;
+                        this.followersDiff = data.competitor_comparison.followers_difference;
+                        this.youRate = data.competitor_comparison.you_engagement_rate;
+                        this.compResultRate = data.competitor_comparison.competitor_engagement_rate;
+                        this.rateDiff = data.competitor_comparison.er_difference_absolute;
+                        this.compMessage = data.competitor_comparison.message;
+                    }
+                    
+                    if (data.benchmark_comparison && !this.isLimitedMode) {
+                        this.industryAvgRate = data.benchmark_comparison.benchmark_rate;
+                        this.updateBarChart();
+                    }
+
+                } catch (e) {
+                    console.error("Calculation failed", e);
+                } finally {
+                    this.isCalculating = false;
+                }
             },
 
             // Chart Control vars
