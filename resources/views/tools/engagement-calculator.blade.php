@@ -1194,7 +1194,7 @@
                                     saves: this.saves,
                                     views: this.views,
                                     reach: this.reach,
-                                    industry_id: 1, // Fallback for UI testing
+                                    industry_name: this.industry,
                                     split_reels: this.splitReels,
                                     split_images: this.splitImages,
                                     split_carousel: this.splitCarousel,
@@ -1207,9 +1207,17 @@
 
                             const data = await response.json();
 
-                            if (response.status === 403 && data.error === 'guest_limit_reached') {
-                                this.errorMode = true;
-                                this.errorMsg = data.message || "You have reached your free limit. Please sign up to continue.";
+                            if (!response.ok) {
+                                if (response.status === 403 && data.error === 'guest_limit_reached') {
+                                    this.errorMode = true;
+                                    this.errorMsg = data.message || "You have reached your free limit. Please sign up to continue.";
+                                } else if (response.status === 422) {
+                                    this.errorMode = true;
+                                    this.errorMsg = "Check inputs: " + (data.message || "Validation failed.");
+                                } else {
+                                    this.errorMode = true;
+                                    this.errorMsg = data.message || "An unexpected error occurred.";
+                                }
                                 this.isCalculating = false;
                                 return;
                             }
