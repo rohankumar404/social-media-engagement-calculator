@@ -3,12 +3,15 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EngagementCalculatorController;
+use App\Http\Controllers\StrategyCallController;
 
 Route::get('/', [EngagementCalculatorController::class, 'index']);
 Route::get('/calculator', [EngagementCalculatorController::class, 'index'])->name('calculator');
 
 Route::post('/calculate', [EngagementCalculatorController::class, 'calculate']);
 Route::post('/download-report', [EngagementCalculatorController::class, 'downloadReport']);
+
+Route::post('/api/strategy-call', [StrategyCallController::class, 'submit'])->name('api.strategy-call');
 
 Route::get('/dashboard', [EngagementCalculatorController::class, 'dashboard'])
     ->middleware(['auth', 'verified'])

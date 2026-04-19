@@ -10,7 +10,7 @@
                         @if(($localSettings['white_label_active'] ?? '0') == '1' && !empty($localSettings['custom_logo_path']))
                             <img src="{{ asset('storage/' . $localSettings['custom_logo_path']) }}" alt="Logo" class="block h-9 w-auto object-contain">
                         @else
-                            <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                            <img src="{{ asset('assets/img/mapsily-logo.png') }}" alt="Mapsily Logo" class="block h-9 w-auto object-contain">
                         @endif
                     </a>
                 </div>
@@ -24,7 +24,11 @@
             </div>
 
             <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <div class="hidden sm:flex sm:items-center sm:ms-6 space-x-4">
+                <a href="https://mapsily.com/" target="_blank" class="px-4 py-2 text-sm font-semibold rounded-md shadow" style="background-color: #85f43a; color: #111; text-decoration: none; transition: all 0.3s ease;">
+                    Visit Mapsily.com <i class="bi bi-box-arrow-up-right ms-1"></i>
+                </a>
+
                 @auth
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">

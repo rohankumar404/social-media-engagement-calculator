@@ -76,8 +76,13 @@
                                         Calculations used: <strong class="text-white">{{ $usageLimit ? $usageLimit->usage_count : 0 }} / 3</strong>
                                     </p>
                                     @if($usageLimit && $usageLimit->usage_count >= 3)
-                                        <a href="#" class="btn-primary-accent inline-block">Upgrade to Premium</a>
+                                        <a href="#" class="btn-primary-accent inline-block mb-2">Upgrade to Premium</a>
                                     @endif
+                                    <div>
+                                        <a href="{{ route('calculator') }}" class="inline-block bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded transition duration-200" style="background-color: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+                                            Go to Calculator <i class="bi bi-arrow-right ms-1"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             @endif
                         </div>
