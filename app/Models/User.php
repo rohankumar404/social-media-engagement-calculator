@@ -25,6 +25,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_admin',
         'otp_code',
         'otp_expires_at',
+        'provider',
+        'provider_id',
     ];
 
     /**
