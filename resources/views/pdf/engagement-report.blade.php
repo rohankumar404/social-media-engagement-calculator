@@ -91,6 +91,11 @@
 <body>
 
     <div class="header">
+        @if(($tool_settings['white_label_active'] ?? '0') == '1' && !empty($tool_settings['custom_logo_path']))
+            <img src="{{ public_path('storage/' . $tool_settings['custom_logo_path']) }}" alt="Logo" style="height: 40px; margin-bottom: 10px;">
+        @else
+            <img src="{{ public_path('assets/img/pdf-logo.png') }}" alt="Logo" style="height: 40px; margin-bottom: 10px;">
+        @endif
         <h1>Engagement Report</h1>
         <p>Generated for {{ $data['platform'] ?? 'Social Media' }} Performance</p>
     </div>

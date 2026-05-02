@@ -318,12 +318,24 @@ class EngagementCalculatorController extends Controller
                 'email' => 'required|email|max:255'
             ]);
 
-            \App\Models\Lead::firstOrCreate([
+            $lead = \App\Models\Lead::firstOrCreate([
                 'email' => $request->input('email')
             ], [
                 'source' => 'pdf_download',
                 'intent_level' => 'high'
             ]);
+
+            // Notify Admin
+            try {
+                $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
+                $notifEmailsRaw = $settings['lead_notification_emails'] ?? 'work.fuelcab@gmail.com';
+                $notifEmails = array_map('trim', explode(',', $notifEmailsRaw));
+
+                \Illuminate\Support\Facades\Mail::to($notifEmails)
+                    ->send(new \App\Mail\NewLeadNotificationMail($lead->toArray()));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Lead notification failed: " . $e->getMessage());
+            }
         }
 
         $pdf = Pdf::loadView('pdf.engagement-report', compact('data'));

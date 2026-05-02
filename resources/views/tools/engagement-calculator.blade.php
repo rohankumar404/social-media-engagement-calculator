@@ -372,7 +372,7 @@
         }
     </style>
 
-    <div class="calculator-app-wrapper py-5 container" x-data="calculatorForm()">
+    <div class="calculator-app-wrapper py-5 container" x-data="calculatorForm()" @open-strategy-modal.window="isStrategyModalOpen = true">
         <!-- Hero Section -->
         <div class="page-hero pt-0">
             <div class="hero-badge"><i class="bi bi-calculator me-2"></i>Free Tool</div>
@@ -826,6 +826,32 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Investment Breakdown (Multi-Currency Demo) -->
+                                    <div class="mt-4 p-4 rounded" style="background: rgba(133, 244, 58, 0.05); border: 1px dashed rgba(133, 244, 58, 0.2);">
+                                        <h6 class="text-light fw-bold mb-3 d-flex justify-content-between">
+                                            <span><i class="bi bi-cash-stack me-2"></i> Investment Breakdown</span>
+                                            <span class="badge bg-primary-accent text-dark" style="background-color: var(--color-primary) !important;">Recalculated in <span x-text="$store.currency.selected"></span></span>
+                                        </h6>
+                                        <div class="row g-3 text-muted" style="font-size: 0.9rem;">
+                                            <div class="col-6 d-flex justify-content-between border-bottom pb-2" style="border-color: rgba(255,255,255,0.05) !important;">
+                                                <span>Content Creation (Est)</span>
+                                                <span class="text-white fw-bold" x-text="$store.currency.format(simFrequency * 50)"></span>
+                                            </div>
+                                            <div class="col-6 d-flex justify-content-between border-bottom pb-2" style="border-color: rgba(255,255,255,0.05) !important;">
+                                                <span>Ad Spend (Est)</span>
+                                                <span class="text-white fw-bold" x-text="$store.currency.format(simFrequency * 20)"></span>
+                                            </div>
+                                            <div class="col-12 mt-3 text-center">
+                                                <div class="text-muted small mb-1">Total Monthly Investment</div>
+                                                <h3 class="text-white fw-bold" x-text="$store.currency.format(simFrequency * 70)"></h3>
+                                                <div class="text-primary-accent fw-bold mt-2" style="font-size: 0.85rem;">
+                                                    <i class="bi bi-cpu me-1"></i> ROI Estimation: 
+                                                    <span x-text="(simFutureEngagement / (simFrequency * 70 * 3)).toFixed(2)"></span> interactions per <span x-text="$store.currency.current.symbol"></span> invested
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -930,7 +956,7 @@
                             <li class="mb-2"><i class="bi bi-check2-circle text-primary-accent me-2 fs-5 align-middle"></i>
                                 White-label reports</li>
                         </ul>
-                        <a href="#" class="btn btn-primary-cta w-100">Get Pro for $9/mo</a>
+                        <a href="#" @click.prevent="$dispatch('open-strategy-modal')" class="btn btn-primary-cta w-100">Get Pro for <span x-text="$store.currency.format(9)"></span>/mo</a>
                     </div>
                 </div>
 
@@ -956,7 +982,7 @@
                 </p>
 
                 <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-4">
-                    <a href="#" @click.prevent="isStrategyModalOpen = true" class="btn btn-primary-cta btn-lg px-5">
+                    <a href="#" @click.prevent="$dispatch('open-strategy-modal')" class="btn btn-primary-cta btn-lg px-5">
                         <i class="bi bi-telephone-outbound me-2"></i> Book Free Strategy Call
                     </a>
                     <a href="/register" class="btn btn-outline-light btn-lg px-5">
@@ -1037,60 +1063,8 @@
             </div>
         </template>
 
-        <!-- Strategy Call Modal (Alpine) -->
-        <template x-if="isStrategyModalOpen">
-            <div class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="z-index: 9999;">
-                <div class="position-absolute w-100 h-100 bg-black opacity-75" @click="isStrategyModalOpen = false"></div>
-                <div class="position-relative p-4 p-md-5 rounded-4 shadow-lg w-100 mx-3 overflow-auto" style="max-width: 500px; max-height: 90vh; background: #1a1a1a; border: 1px solid rgba(133, 244, 58, 0.3);">
-                    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" @click="isStrategyModalOpen = false" aria-label="Close"></button>
-                    
-                    <h4 class="mb-2 fw-bold" style="color: #f8f9fa;">Book Free Strategy Call</h4>
-                    <p class="text-secondary mb-4" style="font-size: 0.95rem;">Let us engineer a personalized strategy for your brand to scale.</p>
+        </div>
 
-                    <div x-show="strategySuccess">
-                        <div class="alert alert-success d-flex align-items-center mb-4" style="background: rgba(133, 244, 58, 0.1); border: 1px solid rgba(133, 244, 58, 0.3); color: #85f43a;">
-                            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-                            <div>Your request has been sent! We will contact you shortly.</div>
-                        </div>
-                    </div>
-
-                    <div x-show="strategyError">
-                        <div class="alert alert-danger d-flex align-items-center mb-4" style="background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.3); color: #ff8787;">
-                            <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
-                            <div>Something went wrong. Please try again.</div>
-                        </div>
-                    </div>
-
-                    <form @submit.prevent="submitStrategy" x-show="!strategySuccess">
-                        <div class="mb-3">
-                            <label class="form-label" style="color: #a1a1aa; font-size: 0.9rem;">Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control text-white" x-model="strategyForm.name" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" style="color: #a1a1aa; font-size: 0.9rem;">Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control text-white" x-model="strategyForm.email" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" style="color: #a1a1aa; font-size: 0.9rem;">Phone Number <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control text-white" x-model="strategyForm.phone" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" style="color: #a1a1aa; font-size: 0.9rem;">Company Name (Optional)</label>
-                            <input type="text" class="form-control text-white" x-model="strategyForm.company" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label" style="color: #a1a1aa; font-size: 0.9rem;">Message (Optional)</label>
-                            <textarea class="form-control text-white" rows="3" x-model="strategyForm.message" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);" placeholder="Tell us about your goals..."></textarea>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary-cta w-100 py-2 fw-semibold" :disabled="isStrategySubmitting">
-                            <span x-show="!isStrategySubmitting">Submit Request</span>
-                            <span x-show="isStrategySubmitting">Submitting...</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </template>
     </div>
 
     @push('scripts')
@@ -1098,51 +1072,6 @@
         <script>
             document.addEventListener('alpine:init', () => {
                 Alpine.data('calculatorForm', () => ({
-                    // Strategy Call
-                    isStrategyModalOpen: false,
-                    isStrategySubmitting: false,
-                    strategySuccess: false,
-                    strategyError: false,
-                    strategyForm: {
-                        name: '',
-                        email: '',
-                        phone: '',
-                        company: '',
-                        message: ''
-                    },
-
-                    async submitStrategy() {
-                        this.isStrategySubmitting = true;
-                        this.strategySuccess = false;
-                        this.strategyError = false;
-
-                        try {
-                            const response = await fetch('/api/strategy-call', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                },
-                                body: JSON.stringify(this.strategyForm)
-                            });
-
-                            if (response.ok) {
-                                this.strategySuccess = true;
-                                this.strategyForm = {name: '', email: '', phone: '', company: '', message: ''};
-                                setTimeout(() => {
-                                    this.isStrategyModalOpen = false;
-                                    this.strategySuccess = false;
-                                }, 3000);
-                            } else {
-                                this.strategyError = true;
-                            }
-                        } catch (e) {
-                            this.strategyError = true;
-                        } finally {
-                            this.isStrategySubmitting = false;
-                        }
-                    },
-
                     step: 1,
 
                     // Step 1

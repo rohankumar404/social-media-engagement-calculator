@@ -25,6 +25,27 @@
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6 space-x-4">
+                <div class="me-3" x-data>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle text-dark fw-bold border-gray-300" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span x-text="$store.currency.selected"></span> (<span x-text="$store.currency.current.symbol"></span>)
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                            <template x-for="curr in $store.currency.list" :key="curr.code">
+                                <li>
+                                    <a class="dropdown-item d-flex justify-content-between align-items-center py-2" 
+                                       href="#" 
+                                       @click.prevent="$store.currency.update(curr.code)"
+                                       :class="{ 'bg-light fw-bold': $store.currency.selected === curr.code }">
+                                        <span x-text="curr.code"></span>
+                                        <span class="text-muted small" x-text="curr.symbol"></span>
+                                    </a>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+
                 <a href="https://mapsily.com/" target="_blank" class="px-4 py-2 text-sm font-semibold rounded-md shadow" style="background-color: #85f43a; color: #111; text-decoration: none; transition: all 0.3s ease;">
                     Visit Mapsily.com <i class="bi bi-box-arrow-up-right ms-1"></i>
                 </a>

@@ -16,7 +16,11 @@ class StrategyCallController extends Controller
             'message' => 'nullable|string',
         ]);
 
-        \Illuminate\Support\Facades\Mail::to('work.fuelcab@gmail.com')
+        $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
+        $notifEmailsRaw = $settings['lead_notification_emails'] ?? 'work.fuelcab@gmail.com';
+        $notifEmails = array_map('trim', explode(',', $notifEmailsRaw));
+
+        \Illuminate\Support\Facades\Mail::to($notifEmails)
             ->send(new \App\Mail\StrategyCallRequestMail($validated));
 
         return response()->json(['success' => true]);

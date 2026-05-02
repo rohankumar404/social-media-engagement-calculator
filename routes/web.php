@@ -39,6 +39,8 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->group(function () {
     Route::get('/leads/export', [\App\Http\Controllers\AdminController::class, 'exportLeads'])->name('admin.leads.export');
     Route::get('/settings', [\App\Http\Controllers\AdminSettingController::class, 'index'])->name('admin.settings');
     Route::post('/settings', [\App\Http\Controllers\AdminSettingController::class, 'update'])->name('admin.settings.update');
+    Route::post('/settings/currencies', [\App\Http\Controllers\AdminSettingController::class, 'addCurrency'])->name('admin.currencies.add');
+    Route::delete('/settings/currencies/{id}', [\App\Http\Controllers\AdminSettingController::class, 'deleteCurrency'])->name('admin.currencies.delete');
     
     // Benchmarks
     Route::resource('/benchmarks', \App\Http\Controllers\AdminBenchmarkController::class)->except(['show']);
