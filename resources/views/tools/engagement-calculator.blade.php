@@ -372,7 +372,7 @@
         }
     </style>
 
-    <div class="calculator-app-wrapper py-5 container" x-data="calculatorForm()" @open-strategy-modal.window="isStrategyModalOpen = true">
+    <div class="calculator-app-wrapper py-5 container" x-data="calculatorForm()">
         <!-- Hero Section -->
         <div class="page-hero pt-0">
             <div class="hero-badge"><i class="bi bi-calculator me-2"></i>Free Tool</div>
@@ -828,26 +828,37 @@
                                     </div>
 
                                     <!-- Investment Breakdown (Multi-Currency Demo) -->
-                                    <div class="mt-4 p-4 rounded" style="background: rgba(133, 244, 58, 0.05); border: 1px dashed rgba(133, 244, 58, 0.2);">
+                                    <div class="mt-4 p-4 rounded"
+                                        style="background: rgba(133, 244, 58, 0.05); border: 1px dashed rgba(133, 244, 58, 0.2);">
                                         <h6 class="text-light fw-bold mb-3 d-flex justify-content-between">
                                             <span><i class="bi bi-cash-stack me-2"></i> Investment Breakdown</span>
-                                            <span class="badge bg-primary-accent text-dark" style="background-color: var(--color-primary) !important;">Recalculated in <span x-text="$store.currency.selected"></span></span>
+                                            <span class="badge bg-primary-accent text-dark"
+                                                style="background-color: var(--color-primary) !important;">Recalculated in
+                                                <span x-text="$store.currency.selected"></span></span>
                                         </h6>
                                         <div class="row g-3 text-muted" style="font-size: 0.9rem;">
-                                            <div class="col-6 d-flex justify-content-between border-bottom pb-2" style="border-color: rgba(255,255,255,0.05) !important;">
+                                            <div class="col-6 d-flex justify-content-between border-bottom pb-2"
+                                                style="border-color: rgba(255,255,255,0.05) !important;">
                                                 <span>Content Creation (Est)</span>
-                                                <span class="text-white fw-bold" x-text="$store.currency.format(simFrequency * 50)"></span>
+                                                <span class="text-white fw-bold"
+                                                    x-text="$store.currency.format(simFrequency * 50)"></span>
                                             </div>
-                                            <div class="col-6 d-flex justify-content-between border-bottom pb-2" style="border-color: rgba(255,255,255,0.05) !important;">
+                                            <div class="col-6 d-flex justify-content-between border-bottom pb-2"
+                                                style="border-color: rgba(255,255,255,0.05) !important;">
                                                 <span>Ad Spend (Est)</span>
-                                                <span class="text-white fw-bold" x-text="$store.currency.format(simFrequency * 20)"></span>
+                                                <span class="text-white fw-bold"
+                                                    x-text="$store.currency.format(simFrequency * 20)"></span>
                                             </div>
                                             <div class="col-12 mt-3 text-center">
                                                 <div class="text-muted small mb-1">Total Monthly Investment</div>
-                                                <h3 class="text-white fw-bold" x-text="$store.currency.format(simFrequency * 70)"></h3>
+                                                <h3 class="text-white fw-bold"
+                                                    x-text="$store.currency.format(simFrequency * 70)"></h3>
                                                 <div class="text-primary-accent fw-bold mt-2" style="font-size: 0.85rem;">
-                                                    <i class="bi bi-cpu me-1"></i> ROI Estimation: 
-                                                    <span x-text="(simFutureEngagement / (simFrequency * 70 * 3)).toFixed(2)"></span> interactions per <span x-text="$store.currency.current.symbol"></span> invested
+                                                    <i class="bi bi-cpu me-1"></i> ROI Estimation:
+                                                    <span
+                                                        x-text="(simFutureEngagement / (simFrequency * 70 * 3)).toFixed(2)"></span>
+                                                    interactions per <span x-text="$store.currency.current.symbol"></span>
+                                                    invested
                                                 </div>
                                             </div>
                                         </div>
@@ -956,7 +967,7 @@
                             <li class="mb-2"><i class="bi bi-check2-circle text-primary-accent me-2 fs-5 align-middle"></i>
                                 White-label reports</li>
                         </ul>
-                        <a href="#" @click.prevent="$dispatch('open-strategy-modal')" class="btn btn-primary-cta w-100">Get Pro for <span x-text="$store.currency.format(9)"></span>/mo</a>
+                        <a href="#" onclick="openStrategyModal(); return false;" class="btn btn-primary-cta w-100">Get Pro for <span x-text="$store.currency.format(9)"></span>/mo</a>
                     </div>
                 </div>
 
@@ -975,14 +986,15 @@
                 <h2 class="display-6 fw-bold text-white mb-3 tracking-tight">Need better engagement? <br
                         class="d-none d-md-block"> Let
                     {{ ($tool_settings['white_label_active'] ?? '0') == '1' ? ($tool_settings['custom_client_title'] ?? 'Our Team') : 'Mapsily' }}
-                    grow your brand.</h2>
+                    grow your brand.
+                </h2>
                 <p class="lead text-muted mx-auto mb-4" style="max-width: 600px;">
                     Stop guessing what works. Our advanced growth analysts map your metrics directly against aggressive
                     industry benchmarks building a personalized strategy engineered for scale.
                 </p>
 
                 <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-4">
-                    <a href="#" @click.prevent="$dispatch('open-strategy-modal')" class="btn btn-primary-cta btn-lg px-5">
+                    <a href="#" onclick="openStrategyModal(); return false;" class="btn btn-primary-cta btn-lg px-5">
                         <i class="bi bi-telephone-outbound me-2"></i> Book Free Strategy Call
                     </a>
                     <a href="/register" class="btn btn-outline-light btn-lg px-5">
@@ -1063,7 +1075,7 @@
             </div>
         </template>
 
-        </div>
+    </div>
 
     </div>
 

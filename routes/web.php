@@ -48,4 +48,8 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->group(function () {
     // Report Template Editor
     Route::get('/report-template', [\App\Http\Controllers\AdminTemplateController::class, 'edit'])->name('admin.template.edit');
     Route::post('/report-template', [\App\Http\Controllers\AdminTemplateController::class, 'update'])->name('admin.template.update');
+
+    // Admin Profile
+    Route::get('/profile', [\App\Http\Controllers\AdminController::class, 'profile'])->name('admin.profile');
+    Route::post('/profile', [\App\Http\Controllers\AdminController::class, 'updateProfile'])->name('admin.profile.update');
 });

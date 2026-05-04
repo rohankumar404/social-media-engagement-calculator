@@ -69,4 +69,34 @@ class AdminController extends Controller
         
         return response()->stream($callback, 200, $headers);
     }
+
+    public function profile()
+    {
+        return view('admin.profile', ['admin' => auth()->user()]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|unique:users,email,' . auth()->id(),
+            'current_password' => 'required',
+            'new_password' => 'nullable|min:8|confirmed',
+        ]);
+
+        $user = auth()->user();
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'The provided password does not match our records.']);
+        }
+
+        $user->email = $request->email;
+        
+        if ($request->new_password) {
+            $user->password = \Illuminate\Support\Facades\Hash::make($request->new_password);
+        }
+
+        $user->save();
+
+        return back()->with('success', 'Profile updated successfully.');
+    }
 }

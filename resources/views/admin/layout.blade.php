@@ -72,6 +72,11 @@
                     <i class="bi bi-file-earmark-code-fill me-2"></i> Report Template
                 </a>
             </li>
+            <li>
+                <a href="{{ route('admin.profile') }}" class="nav-link {{ request()->routeIs('admin.profile') ? 'active' : '' }}">
+                    <i class="bi bi-person-gear me-2"></i> Profile Settings
+                </a>
+            </li>
             <hr>
             <li>
                 <a href="{{ route('dashboard') }}" class="nav-link text-warning">
