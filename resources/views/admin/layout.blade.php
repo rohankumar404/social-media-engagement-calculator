@@ -26,6 +26,10 @@
             background-color: rgba(255,255,255,0.05);
             border-radius: 4px;
         }
+        .nav-link.text-danger:hover {
+            color: #ff4d4d !important;
+            background-color: rgba(255,0,0,0.1);
+        }
         .card-header {
             background-color: #fff;
             font-weight: bold;
@@ -72,16 +76,24 @@
                     <i class="bi bi-file-earmark-code-fill me-2"></i> Report Template
                 </a>
             </li>
+            <hr>
             <li>
                 <a href="{{ route('admin.profile') }}" class="nav-link {{ request()->routeIs('admin.profile') ? 'active' : '' }}">
                     <i class="bi bi-person-gear me-2"></i> Profile Settings
                 </a>
             </li>
-            <hr>
             <li>
                 <a href="{{ route('dashboard') }}" class="nav-link text-warning">
                     <i class="bi bi-arrow-left-circle me-2"></i> Back to App
                 </a>
+            </li>
+            <li>
+                <form method="POST" action="{{ route('logout') }}" id="admin-logout-form">
+                    @csrf
+                    <a href="{{ route('logout') }}" class="nav-link text-danger" onclick="event.preventDefault(); document.getElementById('admin-logout-form').submit();">
+                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                    </a>
+                </form>
             </li>
         </ul>
     </div>

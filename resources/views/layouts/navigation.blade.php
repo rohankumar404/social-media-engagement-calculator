@@ -46,6 +46,12 @@
                     </div>
                 </div>
 
+                @if(auth()->user()?->is_admin)
+                <a href="{{ route('admin.dashboard') }}" class="px-4 py-2 text-sm font-semibold rounded-md shadow border border-gray-300" style="background-color: #272727; color: #fff; text-decoration: none; transition: all 0.3s ease;">
+                    <i class="bi bi-shield-lock me-1"></i> Admin Panel
+                </a>
+                @endif
+
                 <a href="https://mapsily.com/" target="_blank" class="px-4 py-2 text-sm font-semibold rounded-md shadow" style="background-color: #85f43a; color: #111; text-decoration: none; transition: all 0.3s ease;">
                     Visit Mapsily.com <i class="bi bi-box-arrow-up-right ms-1"></i>
                 </a>
@@ -118,6 +124,12 @@
             </div>
 
             <div class="mt-3 space-y-1">
+                @if(auth()->user()?->is_admin)
+                <x-responsive-nav-link :href="route('admin.dashboard')" class="text-primary font-bold">
+                    <i class="bi bi-shield-lock me-1"></i> {{ __('Admin Panel') }}
+                </x-responsive-nav-link>
+                @endif
+
                 <x-responsive-nav-link :href="route('profile.edit')">
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
