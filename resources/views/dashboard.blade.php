@@ -112,7 +112,7 @@
                         <div class="p-8 text-center text-gray-400">
                             You haven't generated any reports yet.
                             <div class="mt-4">
-                                <a href="/calculator" class="text-[#85f43a] hover:underline">Go to Calculator</a>
+                                <a href="{{ route('calculator') }}" class="text-[#85f43a] hover:underline">Go to Calculator</a>
                             </div>
                         </div>
                     @else
@@ -168,9 +168,7 @@
                                             </button>
 
                                             <!-- Hidden data payload storage -->
-                                            <div id="report-data-{{ $report->id }}" class="hidden">
-                                                {{ $report->report_json }}
-                                            </div>
+                                            <div id="report-data-{{ $report->id }}" class="hidden">{!! $report->report_json !!}</div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -196,7 +194,7 @@
 
                         let reportData = jsonElement.innerText.trim();
 
-                        const response = await fetch('/download-report', {
+                        const response = await fetch('{{ route('report.download') }}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

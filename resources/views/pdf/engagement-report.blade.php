@@ -91,35 +91,49 @@
 <body>
 
     <div class="header">
-        @if(($tool_settings['white_label_active'] ?? '0') == '1' && !empty($tool_settings['custom_logo_path']))
-            <img src="{{ public_path('storage/' . $tool_settings['custom_logo_path']) }}" alt="Logo" style="height: 40px; margin-bottom: 10px;">
-        @else
-            <img src="{{ public_path('assets/img/pdf-logo.png') }}" alt="Logo" style="height: 40px; margin-bottom: 10px;">
+        @php
+            $logoPath = '';
+            if (($tool_settings['white_label_active'] ?? '0') == '1' && !empty($tool_settings['custom_logo_path'])) {
+                $logoPath = base_path('storage/' . $tool_settings['custom_logo_path']);
+            } else {
+                $logoPath = base_path('assets/img/pdf-logo.png');
+            }
+            
+            $base64Logo = '';
+            if (file_exists($logoPath)) {
+                $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($logoPath);
+                $base64Logo = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        @endphp
+
+        @if($base64Logo)
+            <img src="{{ $base64Logo }}" alt="Logo" style="height: 40px; margin-bottom: 10px;">
         @endif
         <h1>Engagement Report</h1>
-        <p>Generated for {{ $data['platform'] ?? 'Social Media' }} Performance</p>
+        <p>Generated for {{ $platform ?? 'Social Media' }} Performance</p>
     </div>
 
     <div class="score-row">
         <div class="score-col">
             <div class="card" style="text-align: center;">
                 <div class="card-title">Engagement Rate</div>
-                <div class="big-metric">{{ number_format($data['engagement_rate'] ?? 0, 2) }}%</div>
+                <div class="big-metric">{{ number_format((float)($engagement_rate ?? 0), 2) }}%</div>
             </div>
         </div>
         <div class="score-col" style="margin-left: 2%;">
             <div class="card" style="text-align: center;">
                 <div class="card-title">Quality Score</div>
-                <div class="big-metric" style="color: #85f43a;">{{ $data['engagement_score'] ?? 'N/A' }}</div>
+                <div class="big-metric" style="color: #85f43a;">{{ $engagement_score ?? 'N/A' }}</div>
             </div>
         </div>
     </div>
 
-    @if(!empty($data['insights']) || !empty($data['recommendations']))
+    @if(!empty($insights) || !empty($recommendations))
     <div class="card">
         <div class="card-title">Insights & Recommendations</div>
         <ul>
-            @php $recs = !empty($data['improvement_tips']) ? $data['improvement_tips'] : ($data['recommendations'] ?? []); @endphp
+            @php $recs = !empty($improvement_tips) ? $improvement_tips : ($recommendations ?? []); @endphp
             @foreach($recs as $rec)
                 <li class="list-item">{{ $rec }}</li>
             @endforeach
@@ -127,14 +141,14 @@
     </div>
     @endif
 
-    @if(!empty($data['benchmark_comparison']))
+    @if(!empty($benchmark_comparison))
     <div class="card">
         <div class="card-title">Industry Benchmark</div>
-        <p>{{ $data['benchmark_comparison']['message'] ?? '' }}</p>
+        <p>{{ $benchmark_comparison['message'] ?? '' }}</p>
     </div>
     @endif
 
-    @if(!empty($data['competitor_comparison']))
+    @if(!empty($competitor_comparison))
     <div class="card">
         <div class="card-title">Competitor Comparison</div>
         <table>
@@ -149,27 +163,27 @@
             <tbody>
                 <tr>
                     <td>Followers</td>
-                    <td>{{ $data['competitor_comparison']['you_followers'] ?? 0 }}</td>
-                    <td>{{ $data['competitor_comparison']['competitor_followers'] ?? 0 }}</td>
-                    <td>{{ $data['competitor_comparison']['followers_difference'] ?? 0 }}</td>
+                    <td>{{ $competitor_comparison['you_followers'] ?? 0 }}</td>
+                    <td>{{ $competitor_comparison['competitor_followers'] ?? 0 }}</td>
+                    <td>{{ $competitor_comparison['followers_difference'] ?? 0 }}</td>
                 </tr>
                 <tr>
                     <td>Engagement Rate</td>
-                    <td>{{ $data['competitor_comparison']['you_engagement_rate'] ?? 0 }}%</td>
-                    <td>{{ $data['competitor_comparison']['competitor_engagement_rate'] ?? 0 }}%</td>
-                    <td>{{ $data['competitor_comparison']['er_difference_absolute'] ?? 0 }}%</td>
+                    <td>{{ $competitor_comparison['you_engagement_rate'] ?? 0 }}%</td>
+                    <td>{{ $competitor_comparison['competitor_engagement_rate'] ?? 0 }}%</td>
+                    <td>{{ $competitor_comparison['er_difference_absolute'] ?? 0 }}%</td>
                 </tr>
             </tbody>
         </table>
-        <p><strong>Conclusion:</strong> {{ $data['competitor_comparison']['message'] ?? '' }}</p>
+        <p><strong>Conclusion:</strong> {{ $competitor_comparison['message'] ?? '' }}</p>
     </div>
     @endif
 
-    @if(!empty($data['what_to_post_next']) && !empty($data['what_to_post_next']['recommendations']))
+    @if(!empty($what_to_post_next) && !empty($what_to_post_next['recommendations']))
     <div class="card">
         <div class="card-title">What To Post Next</div>
         <ul>
-            @foreach($data['what_to_post_next']['recommendations'] as $item)
+            @foreach($what_to_post_next['recommendations'] as $item)
                 <li class="list-item">{{ $item }}</li>
             @endforeach
         </ul>

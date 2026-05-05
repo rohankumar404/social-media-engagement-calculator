@@ -8,8 +8,8 @@ use App\Http\Controllers\StrategyCallController;
 Route::get('/', [EngagementCalculatorController::class, 'index']);
 Route::get('/calculator', [EngagementCalculatorController::class, 'index'])->name('calculator');
 
-Route::post('/calculate', [EngagementCalculatorController::class, 'calculate']);
-Route::post('/download-report', [EngagementCalculatorController::class, 'downloadReport']);
+Route::post('/calculate', [EngagementCalculatorController::class, 'calculate'])->name('calculate');
+Route::post('/download-report', [EngagementCalculatorController::class, 'downloadReport'])->name('report.download');
 
 Route::post('/api/strategy-call', [StrategyCallController::class, 'submit'])->name('api.strategy-call');
 

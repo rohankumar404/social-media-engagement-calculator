@@ -609,7 +609,7 @@
                                 <div class="mt-2" x-show="errorMode">
                                     <button type="button" class="btn btn-outline-danger btn-sm px-3" @click="resetError">Try
                                         Again Later</button>
-                                    <a href="/register" class="btn btn-danger btn-sm px-3 ms-2">Upgrade Now</a>
+                                    <a href="{{ route('register') }}" class="btn btn-danger btn-sm px-3 ms-2">Upgrade Now</a>
                                 </div>
                             </div>
 
@@ -997,7 +997,7 @@
                     <a href="#" onclick="openStrategyModal(); return false;" class="btn btn-primary-cta btn-lg px-5">
                         <i class="bi bi-telephone-outbound me-2"></i> Book Free Strategy Call
                     </a>
-                    <a href="/register" class="btn btn-outline-light btn-lg px-5">
+                    <a href="{{ route('register') }}" class="btn btn-outline-light btn-lg px-5">
                         <i class="bi bi-rocket-takeoff me-2 text-primary-accent"></i> Upgrade to Premium
                     </a>
                 </div>
@@ -1021,7 +1021,7 @@
                         <p class="text-muted mb-4">You have used your free full calculations. Upgrade your account to
                             continue unlocking deep stats, benchmarks, and custom PDF outputs.</p>
                         <div class="d-flex flex-column gap-2 justify-content-center mt-2">
-                            <a href="/register" class="btn btn-primary-cta w-100">Upgrade to Pro</a>
+                            <a href="{{ route('register') }}" class="btn btn-primary-cta w-100">Upgrade to Pro</a>
                             <button type="button" class="btn text-muted p-2"
                                 @click="upgradeRequired = false; isLimitedMode = true"
                                 style="font-size: 0.9rem; text-decoration: underline; background: transparent; border: none; cursor: pointer;">Continue
@@ -1219,7 +1219,7 @@
                         this.errorMode = false;
 
                         try {
-                            const response = await fetch('/calculate', {
+                            const response = await fetch('{{ route('calculate') }}', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -1337,7 +1337,7 @@
                         this.exportError = '';
 
                         try {
-                            const response = await fetch('/download-report', {
+                            const response = await fetch('{{ route('report.download') }}', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -1346,13 +1346,22 @@
                                 },
                                 body: JSON.stringify({
                                     report_data: this.cachedReportJson,
-                                    email: this.guestEmail
+                                    email: this.guestEmail,
+                                    engagement_rate: this.engagementRate,
+                                    engagement_score: this.engagementScore,
+                                    platform: this.platform
                                 })
                             });
 
                             if (!response.ok) {
-                                const err = await response.json();
-                                this.exportError = err.message || 'Failed to generate PDF';
+                                let errorMsg = 'Failed to generate PDF';
+                                try {
+                                    const err = await response.json();
+                                    errorMsg = err.message || errorMsg;
+                                } catch (e) {
+                                    // Not JSON, maybe a 500 error page
+                                }
+                                this.exportError = errorMsg;
                                 this.isExporting = false;
                                 return;
                             }

@@ -193,8 +193,8 @@
                     <div class="col-lg-2 col-6">
                         <h6 class="text-white fw-bold mb-3">Product</h6>
                         <ul class="list-unstyled small">
-                            <li class="mb-2"><a href="/" class="text-decoration-none" style="color: #a1a1aa !important;">Calculator</a></li>
-                            <li class="mb-2"><a href="/dashboard" class="text-decoration-none" style="color: #a1a1aa !important;">Dashboard</a></li>
+                            <li class="mb-2"><a href="{{ route('calculator') }}" class="text-decoration-none" style="color: #a1a1aa !important;">Calculator</a></li>
+                            <li class="mb-2"><a href="{{ route('dashboard') }}" class="text-decoration-none" style="color: #a1a1aa !important;">Dashboard</a></li>
                             <li class="mb-2"><a href="#" class="text-decoration-none" style="color: #a1a1aa !important;">Pricing</a></li>
                             <li class="mb-2"><a href="#" class="text-decoration-none" style="color: #a1a1aa !important;">API Access</a></li>
                         </ul>

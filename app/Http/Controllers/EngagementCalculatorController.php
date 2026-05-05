@@ -258,6 +258,7 @@ class EngagementCalculatorController extends Controller
              $benchmark_comparison = null;
         }
 
+
         $report_json = json_encode($report_data);
 
         if (auth()->check() && !$is_limited_mode) {
@@ -308,10 +309,29 @@ class EngagementCalculatorController extends Controller
     public function downloadReport(Request $request)
     {
         $request->validate([
-            'report_data' => 'required|string',
+            'report_data' => 'required',
         ]);
 
-        $data = json_decode($request->input('report_data'), true);
+        $rawData = $request->input('report_data');
+        $data = is_array($rawData) ? $rawData : json_decode($rawData, true);
+        
+        // If report_data is still not an array or missing metrics, try the whole request
+        if (!$data || !is_array($data) || !isset($data['engagement_rate'])) {
+            $data = $request->all();
+            // If it's still nested under report_data as a string in the whole request
+            if (isset($data['report_data']) && is_string($data['report_data'])) {
+                $decoded = json_decode($data['report_data'], true);
+                if (is_array($decoded)) {
+                    $data = array_merge($data, $decoded);
+                }
+            }
+        }
+
+        // Final fallback: if engagement_rate is still missing but we have it in the main request
+        if (!isset($data['engagement_rate']) && $request->has('engagement_rate')) {
+            $data['engagement_rate'] = $request->input('engagement_rate');
+            $data['engagement_score'] = $request->input('engagement_score');
+        }
 
         if (!auth()->check()) {
             $request->validate([
@@ -338,10 +358,17 @@ class EngagementCalculatorController extends Controller
             }
         }
 
-        $pdf = Pdf::loadView('pdf.engagement-report', compact('data'));
-
-        $date = date('Y-m-d');
-        return $pdf->download("engagement-report-{$date}.pdf");
+        try {
+            $pdf = Pdf::loadView('pdf.engagement-report', $data);
+            $date = date('Y-m-d');
+            return $pdf->download("engagement-report-{$date}.pdf");
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("PDF Generation Error: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'PDF generation failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function dashboard()
