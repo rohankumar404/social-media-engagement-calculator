@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Lead extends Model
 {
-    protected $fillable = ['email', 'source', 'intent_level'];
+    protected $fillable = ['name', 'email', 'phone', 'company', 'message', 'source', 'intent_level'];
 }

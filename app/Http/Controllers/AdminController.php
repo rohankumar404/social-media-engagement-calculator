@@ -45,7 +45,7 @@ class AdminController extends Controller
             "Expires" => "0"
         ];
         
-        $columns = ['ID', 'Email', 'Source', 'Intent Level', 'Created At'];
+        $columns = ['ID', 'Name', 'Email', 'Phone', 'Company', 'Message', 'Source', 'Intent Level', 'Created At'];
         
         $callback = function() use($columns) {
             $file = fopen('php://output', 'w');
@@ -55,7 +55,11 @@ class AdminController extends Controller
                 foreach ($leads as $lead) {
                     $row = [
                         $lead->id,
+                        $lead->name,
                         $lead->email,
+                        $lead->phone,
+                        $lead->company,
+                        $lead->message,
                         $lead->source,
                         $lead->intent_level,
                         $lead->created_at->format('Y-m-d H:i:s')

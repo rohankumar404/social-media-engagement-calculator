@@ -368,7 +368,7 @@
 
             try {
                 var token = document.querySelector('meta[name="csrf-token"]');
-                var response = await fetch('/api/strategy-call', {
+                var response = await fetch('{{ route('api.strategy-call') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -386,8 +386,17 @@
                     });
                     setTimeout(closeStrategyModal, 3500);
                 } else {
+                    var errorMsg = 'Something went wrong. Please try again.';
+                    if (response.status === 422) {
+                        var data = await response.json();
+                        if (data.errors) {
+                            errorMsg = Object.values(data.errors).flat().join(' ');
+                        }
+                    } else if (response.status === 419) {
+                        errorMsg = 'Session expired. Please refresh the page.';
+                    }
                     errorDiv.style.display = 'block';
-                    errorDiv.querySelector('div:last-child').textContent = 'Something went wrong. Please try again.';
+                    errorDiv.querySelector('div:last-child').textContent = errorMsg;
                 }
             } catch (err) {
                 errorDiv.style.display = 'block';

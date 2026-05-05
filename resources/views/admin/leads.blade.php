@@ -13,26 +13,30 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Email Captured</th>
-                        <th>Intercept Source</th>
-                        <th>Intent Logic</th>
-                        <th>Capture Date</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Source</th>
+                        <th>Intent</th>
+                        <th>Date</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($leads as $lead)
                     <tr>
                         <td>{{ $lead->id }}</td>
+                        <td>{{ $lead->name ?? 'N/A' }}</td>
                         <td><strong>{{ $lead->email }}</strong></td>
+                        <td>{{ $lead->phone ?? 'N/A' }}</td>
                         <td><span class="badge bg-info text-dark">{{ $lead->source }}</span></td>
                         <td>
-                            @if($lead->intent_level === 'high')
+                            @if(strtolower($lead->intent_level) === 'high')
                                 <span class="badge bg-success">High</span>
                             @else
                                 <span class="badge bg-secondary">Low</span>
                             @endif
                         </td>
-                        <td>{{ $lead->created_at->format('M j, Y H:i') }}</td>
+                        <td>{{ $lead->created_at->format('M j, H:i') }}</td>
                     </tr>
                     @endforeach
                 </tbody>
